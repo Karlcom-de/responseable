@@ -53,6 +53,8 @@ k apply -f deploy/kubernetes/exercise-media.yaml
 k rollout status deploy/responseable-exercise --timeout=8m
 k rollout status deploy/exercise-media --timeout=90s
 k exec deploy/responseable-exercise -c postgres -- psql -U exercise -d exercise -v ON_ERROR_STOP=1 -c "INSERT INTO xmpp_rooms VALUES ('demo-haupt','command'),('demo-nord','north');"
+k apply -f deploy/xmpp/exercise-reconcile.yaml
+k rollout status deploy/exercise-reconcile --timeout=90s
 start_forward() {
   deployment=$1
   mapping=$2

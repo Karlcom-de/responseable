@@ -6,20 +6,18 @@ ResponseAble is a self-hosted incident war room for coordinating responders acro
 
 ## Try it on Kubernetes
 
-You need Git, a POSIX shell and an authenticated `kubectl` context. The cluster must allow you to create a test namespace, pull public Node and PostgreSQL images, and reach npm from the build pod. Allow approximately 3 GiB of build storage and memory. The PostgreSQL sidecar uses an unconfined AppArmor profile for compatibility with K3s. Choose a development cluster where that profile is allowed.
+Use Git, a POSIX shell, OpenSSL, curl and an authenticated `kubectl` context. The cluster needs a default StorageClass for two 1 GiB claims, permission to create a dedicated test namespace, and access to the public image registries, GitHub releases and npm. The PostgreSQL pilot uses an unconfined AppArmor profile on K3s; use a test cluster that permits it.
 
 ```sh
 git clone https://tea.karlcom.de/karl/responseable.git
-cd responseable && ./scripts/kubernetes-exercise.sh
+cd responseable && ./scripts/kubernetes-mvp.sh
 ```
 
-Open **http://127.0.0.1:3190** and select **Run the exercise**. Try the seeded rooms, room chat and whiteboard. The script builds the checked-out commit in Kubernetes, migrates the local PostgreSQL sidecar, waits for readiness and forwards the loopback port. The exercise needs no local Docker, npm, secrets or storage class. Data survives page reloads and container restarts in the same pod. Pod replacement discards it. Re-running the same commit keeps the current pod.
+Keep the launcher running and open **http://127.0.0.1:3190**. Choose **Run the exercise**, open a meeting, and redeem an invite in a separate browser profile on the same workstation. Leave local TCP ports **3190, 7880, 7881 and 7883** free. The test bundles LiveKit, Converse, ejabberd with a PostgreSQL archive, and seeded rooms with chat, whiteboard and room knowledge. The launcher generates test secrets. Local Docker, npm and provider credentials are unnecessary.
 
-The [GitHub mirror](https://github.com/Karlcom-de/responseable) can replace the Gitea clone URL. Stop forwarding with Ctrl+C. Remove the exercise with `kubectl delete namespace responseable-exercise`, or use the namespace selected via `RESPONSEABLE_EXERCISE_NAMESPACE`.
+This is a disposable single-replica environment. ejabberd state and its archive use persistent volumes. The exercise app database survives container restarts within its pod and resets on pod replacement. For a fresh reinstall or cleanup, stop the launcher and use `kubectl delete namespace responseable-mvp`. Set `RESPONSEABLE_EXERCISE_NAMESPACE` to choose a different fresh namespace. Check `curl -fsS http://127.0.0.1:3190/health/ready` once all forwards are ready. If the launcher reports a forward failure, check the named port and use a fresh namespace for a new exercise.
 
-While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/ready`. With local npm dependencies and Playwright Chromium installed, run the browser smoke with `node scripts/exercise-smoke.mjs`. Video, phone alerts and external guest access are outside the default exercise. Use a private HTTPS hostname for remote guest sharing and production passkeys. See [Kubernetes deployment](docs/kubernetes.md) and [staging smoke tests](docs/staging.md) for those environments.
-
-For a local two-browser WebRTC exercise, run `./scripts/kubernetes-exercise-media.sh` instead of the launcher above. This starts a pinned LiveKit in the same test namespace and forwards localhost TCP 7880 (signaling) and 7881 (ICE) independently. Open two separate browser profiles on the same workstation and redeem an invite in the second. Keep the launcher running and leave ports 3190, 7880 and 7881 free. A browser on a different machine needs private HTTPS/WSS and a reachable ICE or TURN path. This media exercise uses the local room chat. The separately configured [XMPP pilot](deploy/xmpp/README.md) uses Converse and durable MAM.
+The [GitHub mirror](https://github.com/Karlcom-de/responseable) can replace the Gitea clone URL. For browsers on other machines use a private HTTPS/WSS origin, a stable passkey RP ID and an independently reachable ICE or TURN path. See [Kubernetes deployment](docs/kubernetes.md) and [XMPP configuration](deploy/xmpp/README.md). Telephony and AI remain opt-in. The smaller launcher `./scripts/kubernetes-exercise.sh` provides the app-only exercise with local chat.
 
 ## What you can do
 
