@@ -63,15 +63,14 @@ export async function pending(purpose: string, consume = false) {
   return entry?.payload;
 }
 
-export async function limit(request: Request, path: string) {
+export async function limit(request: Request, path: string, login?: string) {
   const trustedIpHeader = process.env.RESPONSEABLE_TRUSTED_CLIENT_IP_HEADER;
   const source = trustedIpHeader ? request.headers.get(trustedIpHeader)?.trim() : '';
   const cookie = await authCookie();
   // The ingress must replace this header. Without it, credential verification is
   // bounded per browser for established challenges, and perimeter rate limits apply.
-  const identity = source && /^[0-9a-f:.]{2,45}$/i.test(source) ? 'ip:' + source : cookie ? 'browser:' + hash(cookie) : '';
-  if (!identity) return true;
-  const bucket = hash(account() + ':' + identity + ':' + path);
+  const identity = source && /^[0-9a-f:.]{2,45}$/i.test(source) ? 'ip:' + source : cookie ? 'browser:' + hash(cookie) : 'unidentified';
+  const bucket = hash((login ?? account() ?? '') + ':' + identity + ':' + path);
   const now = Date.now();
   const [row] = await query<{ count: number }>(`
     INSERT INTO auth_budget(operator, window_start, count) VALUES ($1,$2,1)

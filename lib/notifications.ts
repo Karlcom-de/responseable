@@ -1,7 +1,7 @@
 import 'server-only';
 import { SipClient } from 'livekit-server-sdk';
 import { awsClient, awsNotification } from './aws-notification.mjs';
-import { demo } from './store';
+import { accountsEnabled, demo } from './store';
 
 export type Method = 'sms' | 'android' | 'voice' | 'sip';
 export type Provider = 'android' | 'webhook' | 'aws' | 'sip';
@@ -32,7 +32,7 @@ function configuredProvider(channel: 'sms' | 'voice'): Provider | undefined {
 
 export function notificationsAvailable(): Partial<Record<Method, Provider>> {
   if (demo) return {};
-  const sms = configuredProvider('sms');
+  const sms = (!accountsEnabled() || process.env.RESPONSEABLE_INVITE_KEY) ? configuredProvider('sms') : undefined;
   const call = configuredProvider('voice');
   const { LIVEKIT_INTERNAL_URL, LIVEKIT_SIP_TRUNK_ID, LIVEKIT_API_KEY, LIVEKIT_API_SECRET } = process.env;
   return {

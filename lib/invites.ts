@@ -1,7 +1,7 @@
 import 'server-only';
 import { reconcileXmpp } from "./xmpp";
 import { createHmac } from 'node:crypto';
-import { demo, hash, query, roomPath, session, setSessionCookie, token, validToken } from './store';
+import { accountsEnabled, demo, hash, query, roomPath, session, setSessionCookie, token, validToken } from './store';
 
 const fields = 'id, expires, max_uses AS "maxUses", max_uses - uses AS "remainingUses"';
 type Invite = { id: string; expires: string; maxUses: number; remainingUses: number };
@@ -50,7 +50,7 @@ export async function redeemInvite(value: string, name: string) {
 }
 
 export function smsInviteToken(id: string) {
-  const key = process.env.RESPONSEABLE_INVITE_KEY || process.env.RESPONSEABLE_PASSWORD_HASH;
+  const key = process.env.RESPONSEABLE_INVITE_KEY || (!accountsEnabled() ? process.env.RESPONSEABLE_PASSWORD_HASH : undefined);
   if (!key) throw new Error('Invite signing key unavailable.');
   return createHmac('sha256', key).update('responseable/sms-invite/v1:' + id).digest('base64url');
 }
