@@ -68,17 +68,14 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       doc.head.append(style);
       const root = doc.createElement('converse-root');
       doc.body.append(root);
-      // Converse may focus its composer asynchronously as archived messages arrive.
-      const element = doc.defaultView?.HTMLElement.prototype;
-      const focus = element?.focus;
-      const restoreFocus = () => { if (element && focus) element.focus = focus; };
-      if (element && focus) {
-        element.focus = function (options) {
-          if (!this.matches(".chat-textarea")) focus.call(this, options);
-        };
-        doc.addEventListener("pointerdown", restoreFocus, { capture: true, once: true });
-        doc.addEventListener("keydown", restoreFocus, { capture: true, once: true });
-      }
+      // Converse 12 adds native autofocus to its composer when rendering a room.
+      const removeAutofocus = () => {
+        for (const input of root.querySelectorAll("textarea.chat-textarea[autofocus]")) {
+          input.removeAttribute("autofocus");
+        }
+      };
+      const composerObserver = new MutationObserver(removeAutofocus);
+      composerObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["autofocus"] });
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -110,7 +107,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; restoreFocus(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
