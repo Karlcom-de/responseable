@@ -16,7 +16,7 @@ for (const member of [true, false]) {
     assert.equal(url, 'https://example.invalid/api/set_room_affiliation');
     assert.equal(options.redirect, 'error');
     assert.deepEqual(JSON.parse(options.body), {
-      name: 'room', service: 'muc.example.invalid', jid, affiliation: member ? 'member' : 'outcast',
+      room: 'room', service: 'muc.example.invalid', user, host: 'example.invalid', affiliation: member ? 'member' : 'outcast',
     });
     return Response.json(0);
   });

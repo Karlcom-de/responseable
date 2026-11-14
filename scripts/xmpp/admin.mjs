@@ -18,10 +18,11 @@ export async function affiliate(baseUrl, bearer, room, service, jid, member, fet
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
     throw Error('XMPP admin URL must use HTTPS');
   }
+  const [user, host] = jid.split("@");
   const response = await fetcher(url.href.replace(/\/?$/, '/') + 'set_room_affiliation', {
     method: 'POST', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(5000),
     headers: { Authorization: 'Bearer ' + bearer, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: room, service, jid, affiliation: member ? 'member' : 'outcast' }),
+    body: JSON.stringify({ room, service, user, host, affiliation: member ? 'member' : 'outcast' }),
   });
   if (!response.ok || await response.json() !== 0) throw Error('XMPP affiliation update not confirmed');
 }

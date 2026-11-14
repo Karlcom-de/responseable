@@ -35,6 +35,7 @@ api_permissions:
     what: [set_room_affiliation]
 modules:
   mod_http_api: {}
+  mod_muc_admin: {}
   mod_mam:
     default: never
   mod_muc:
