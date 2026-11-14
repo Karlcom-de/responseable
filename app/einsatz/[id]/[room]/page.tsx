@@ -1,3 +1,9 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { query as sql, invitation, roomInIncident, roomPath, session, type Incident, type Message, type Room } from '../../../../lib/store';
@@ -35,7 +41,7 @@ export default async function Workspace({ params, searchParams }: {
       <a href="#rooms">Räume</a><a href="#situation">Lage</a><a href="#chat">Raumchat</a>
     </nav>
     <div className="workspaceGrid">
-      <aside className="panel rooms" id="rooms"><h2>Räume <span className="count">{rooms.length}</span></h2>
+      <Card className="panel rooms" id="rooms" role="complementary"><h2>Räume <span className="count">{rooms.length}</span></h2>
         <nav aria-label="Einsatzräume"><ul>{rooms.map(item => <li key={item.id}>
           <Link href={roomPath(id, item.id)} aria-current={item.id === room ? 'page' : undefined}>
             <span aria-hidden="true">{item.main ? '◈' : '#'}</span>{item.name}
@@ -43,37 +49,38 @@ export default async function Workspace({ params, searchParams }: {
         </li>)}</ul></nav>
         {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
           {query.fehler === 'raum' && <Notice>Bitte geben Sie einen Raumnamen ein.</Notice>}
-          <label>Neuer Unterraum<input name="name" placeholder="z. B. Abschnitt Nord" required maxLength={80} /></label>
-          <button className="secondary">Raum anlegen</button>
+          <label>Neuer Unterraum<Input name="name" placeholder="z. B. Abschnitt Nord" required maxLength={80} /></label>
+          <Button type="submit" variant="outline">Raum anlegen</Button>
         </form>}
-      </aside>
-      <section className="panel situation" id="situation">
+      </Card>
+      <Card className="panel situation" id="situation" role="region">
         <div className="eyebrow">{active.main ? 'Hauptraum' : 'Unterraum'}</div>
         <h2 className="roomTitle">{active.name}</h2>
+        <Link href={roomPath(id, room) + "/wissen"}>Raumwissen</Link>
         {!guest && <><h3>Lagebeschreibung</h3><p className="description">{incident.summary || 'Keine Lagebeschreibung erfasst.'}</p></>}
         {!guest && <div className="invites">
-          <form action={createInvitation.bind(null, id, room)}><button className="secondary">Gästelink erstellen</button></form>
+          <form action={createInvitation.bind(null, id, room)}><Button type="submit" variant="outline">Gästelink erstellen</Button></form>
           {invitePath && <div className="inviteResult"><Link href={invitePath} prefetch={false}>Gästelink öffnen</Link>
             <p className="muted">Gültig für diesen Raum. Zum Teilen die Linkadresse kopieren.</p></div>}
         </div>}
         <Board key={"board-" + room} path={roomPath(id, room)} />
         <Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
-      </section>
-      <section className="panel chat" id="chat"><Refresh /><h2>Raumchat</h2>
-        <div className="messages" role="log" aria-label="Chatverlauf" tabIndex={0}>
+      </Card>
+      <Card className="panel chat" id="chat" role="region"><Refresh /><h2>Raumchat</h2>
+        <ScrollArea className="chatScroll"><div className="messages" role="log" aria-label="Chatverlauf">
           {messages.length ? messages.map(message => <article key={message.id}>
             <div className="messageMeta"><strong>{message.name}</strong>{message.guest === 1 && <span>Gast</span>}
               <time dateTime={new Date(Number(message.created)).toISOString()}>{clock.format(Number(message.created))}</time></div>
             <p>{message.body}</p>
           </article>) : <p className="muted">In diesem Raum gibt es noch keine Nachrichten.</p>}
-        </div>
+        </div></ScrollArea>
         <form className="stack composer" action={sendMessage.bind(null, id, room)}>
           {query.fehler === 'nachricht' && <Notice>Bitte geben Sie eine Nachricht ein.</Notice>}
-          <label>Nachricht<textarea name="body" rows={2} required maxLength={2000} /></label>
-          <button>Senden</button>
+          <Field><FieldLabel htmlFor="room-message">Nachricht</FieldLabel><InputGroup><InputGroupTextarea id="room-message" name="body" rows={2} required maxLength={2000} /></InputGroup></Field>
+          <Button type="submit">Senden</Button>
         </form>
-      </section>
+      </Card>
     </div>
   </main></>;
 }

@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { notFound } from 'next/navigation';
 import { invitation } from '../../../lib/store';
 import { join } from '../../actions';
@@ -14,8 +16,8 @@ export default async function Invite({ params, searchParams }: {
     <div className="eyebrow">Raumeinladung</div><h1>{invite.name}</h1>
     <form className="stack" action={join.bind(null, token)}>
       {query.fehler === 'name' && <Notice>Bitte geben Sie einen Anzeigenamen ein.</Notice>}
-      <label>Anzeigename<input name="name" required maxLength={80} autoComplete="nickname" /></label>
-      <button>Raum beitreten</button>
+      <label>Anzeigename<Input name="name" required maxLength={80} autoComplete="nickname" /></label>
+      <Button type="submit">Raum beitreten</Button>
     </form>
   </main></>;
 }

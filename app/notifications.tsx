@@ -1,3 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { NativeSelect } from '@/components/ui/native-select';
 import { methodLabels, notificationsAvailable, statusLabels, providerLabels, type Provider, type Method, type Status } from '../lib/notifications';
 import { query } from '../lib/store';
 import { confirmNotification, prepareNotification } from './actions';
@@ -23,20 +27,20 @@ export default async function Notifications({ incident, room, draft, error }: {
     {error && <Notice>Bitte prüfen Sie Rufnummer und Dienstkonfiguration.</Notice>}
     {!Object.values(available).some(Boolean) ? <p className="muted">Telefoniedienst nicht eingerichtet.</p>
       : <form className="stack" action={prepareNotification.bind(null, incident, room)}>
-        <label>Internationale Rufnummer<input name="number" type="tel" placeholder="+491234567890" required maxLength={16} /></label>
-        <label>Aktion<select name="method">
+        <label>Internationale Rufnummer<Input name="number" type="tel" placeholder="+491234567890" required maxLength={16} /></label>
+        <label>Aktion<NativeSelect name="method">
           {Object.entries(available).map(([method, provider]) => provider && <option key={method} value={method}>
             {methodLabels[method as Method]}{method === 'sms' || method === 'voice' ? ' · ' + providerLabels[provider] : ''}
           </option>)}
-        </select></label>
-        {available.voice && <label>Ansage für den Sprachalarm<textarea name="speech" maxLength={500} rows={2} /></label>}
-        <button className="secondary">Vorschau anzeigen</button>
+        </NativeSelect></label>
+        {available.voice && <label>Ansage für den Sprachalarm<Textarea name="speech" maxLength={500} rows={2} /></label>}
+        <Button type="submit" variant="outline">Vorschau anzeigen</Button>
       </form>}
     {preview && <div className="inviteResult">
       <p><strong>{methodLabels[preview.method]}</strong> · {preview.number}{preview.provider && ' · ' + providerLabels[preview.provider]}</p>
       {preview.body && <p className="description">{preview.body}</p>}
       <form action={confirmNotification.bind(null, incident, room, preview.id)}>
-        <button>{preview.method === 'sms' ? 'SMS senden' : preview.method === 'voice' ? 'Sprachalarm auslösen' : 'Anruf auslösen'}</button>
+        <Button type="submit">{preview.method === 'sms' ? 'SMS senden' : preview.method === 'voice' ? 'Sprachalarm auslösen' : 'Anruf auslösen'}</Button>
       </form>
     </div>}
     {attempts.length > 0 && <ul className="attempts">{attempts.map(attempt => <li key={attempt.id}>

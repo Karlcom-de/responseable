@@ -1,3 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import exercisePreview from '../docs/responseable.webp';
 import Link from 'next/link';
@@ -17,11 +21,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
       <div className="eyebrow">Self-hosted · Open Source</div>
       <h1>Einsatzraum öffnen. Die richtigen Leute dazuholen.</h1>
       <p className="muted">Wenn Chat oder Firmenlogin ausfallen, koordiniert ihr den Einsatz in einer separat betriebenen Instanz. Holt interne Teams und externe Beteiligte per Link dazu und haltet Entscheidungen am gemeinsamen Lagebild fest.</p>
-      {demo ? <form action={enterDemo}><button>Übungsleitstelle öffnen</button></form> : <form className="stack" action={login}>
+      {demo ? <form action={enterDemo}><Button type="submit">Übungsleitstelle öffnen</Button></form> : <form className="stack" action={login}>
         {query.fehler === 'anmeldung' && <Notice>Anmeldung fehlgeschlagen.</Notice>}
-        <label>Kennung<input name="name" autoComplete="username" required maxLength={80} /></label>
-        <label>Passwort<input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
-        <button>Anmelden</button>
+        <label>Kennung<Input name="name" autoComplete="username" required maxLength={80} /></label>
+        <label>Passwort<Input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
+        <Button type="submit">Anmelden</Button>
       </form>}
     </div>
     <figure className="loginProof">
@@ -37,19 +41,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   return <><Header name={current.name} /><main className="overview">
     <div className="eyebrow">Leitstelle</div><h1>Lageübersicht</h1>
     <div className="overviewGrid">
-      <section className="panel"><h2>Einsätze <span className="count">{incidents.length}</span></h2>
+      <Card className="panel" role="region"><h2>Einsätze <span className="count">{incidents.length}</span></h2>
         {incidents.length ? <ul className="listing">{incidents.map(incident => <li key={incident.id}>
           <Link href={roomPath(incident.id, incident.room)}><strong>{incident.title}</strong><span>{incident.summary}</span></Link>
         </li>)}</ul> : <p className="muted">Es sind noch keine Einsätze angelegt.</p>}
-      </section>
-      <section className="panel"><h2>Neuer Einsatz</h2>
+      </Card>
+      <Card className="panel" role="region"><h2>Neuer Einsatz</h2>
         <form className="stack" action={createIncident}>
           {query.fehler === 'titel' && <Notice>Bitte geben Sie eine Einsatzbezeichnung ein.</Notice>}
-          <label>Einsatzbezeichnung<input name="title" required maxLength={100} /></label>
-          <label>Lagebeschreibung<textarea name="summary" rows={4} maxLength={1500} /></label>
-          <button>Einsatz anlegen</button>
+          <label>Einsatzbezeichnung<Input name="title" required maxLength={100} /></label>
+          <label>Lagebeschreibung<Textarea name="summary" rows={4} maxLength={1500} /></label>
+          <Button type="submit">Einsatz anlegen</Button>
         </form>
-      </section>
+      </Card>
     </div>
   </main></>;
 }

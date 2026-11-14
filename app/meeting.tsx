@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -31,7 +32,7 @@ export default function Meeting({ path, enabled }: { path: string; enabled: bool
         setAccess(undefined);
         setError('Verbindung zum Meetingdienst fehlgeschlagen.');
       }} />
-        : <button className="secondary" disabled={pending} onClick={connect}>{pending ? 'Verbindung läuft …' : 'Meeting beitreten'}</button>}
+        : <Button variant="outline" disabled={pending} onClick={connect}>{pending ? 'Verbindung läuft …' : 'Meeting beitreten'}</Button>}
     {error && <p className="notice" role="alert">{error}</p>}
   </section>;
 }

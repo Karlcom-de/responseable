@@ -1,3 +1,6 @@
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 import Link from 'next/link';
 import { demo } from '../lib/store';
@@ -8,12 +11,12 @@ export function Header({ name, guest = false }: { name?: string; guest?: boolean
   return <header className="top">
     {guest ? <strong className="brand">{brand}</strong> : <Link className="brand" href="/">{brand}</Link>}
     <div className="identity">
-      {demo && <span className="badge">Übungsmodus</span>}
-      {name && <><span>{name}</span><form action={logout}><button className="quiet">Abmelden</button></form></>}
+      {demo && <Badge variant="outline">Übungsmodus</Badge>}
+      {name && <><span>{name}</span><form action={logout}><Button type="submit" variant="ghost">Abmelden</Button></form></>}
     </div>
   </header>;
 }
 
 export function Notice({ children }: { children: React.ReactNode }) {
-  return <p className="notice" role="alert">{children}</p>;
+  return <Alert role="alert" variant="destructive"><AlertDescription>{children}</AlertDescription></Alert>;
 }
