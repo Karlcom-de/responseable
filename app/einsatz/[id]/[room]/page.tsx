@@ -1,3 +1,4 @@
+import RoomDestination from '@/app/room-destination';
 import { BookOpen, DoorOpen, GitBranch } from 'lucide-react';
 import RoomInvites from '@/app/room-invites';
 import { Button } from '@/components/ui/button';
@@ -36,14 +37,14 @@ export default async function Workspace({ params, searchParams }: {
       <div className="eyebrow">Incident</div><h1>{incident.title}</h1>
     </section>
     <nav className="workspaceShortcuts" aria-label="Incident sections">
-      <a href="#rooms" >Rooms</a><a href="#situation">Situation</a><a href="#chat">Room chat</a>
+      <a href="#rooms" >Rooms</a><a href="#situation">Stage and call</a><a href="#chat">Room chat</a>
     </nav>
     <div className="workspaceGrid">
       <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
         <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
-          <Link href={roomPath(id, item.id)} aria-current={item.id === room ? 'page' : undefined}>
+          <RoomDestination href={roomPath(id, item.id)} name={item.name} current={item.id === room}>
             {item.main ? <DoorOpen className="navIcon" aria-hidden="true" /> : <GitBranch className="navIcon" aria-hidden="true" />}{item.name}
-          </Link>
+          </RoomDestination>
         </li>)}</ul></nav>
         {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
           {query.fehler === 'raum' && <Notice>Enter a room name.</Notice>}
@@ -54,7 +55,7 @@ export default async function Workspace({ params, searchParams }: {
       <Card className="panel situation" id="situation" role="region">
         <div className="eyebrow">{active.main ? 'Main room' : 'Subroom'}</div>
         <h2 className="roomTitle">{active.name}</h2>
-        {!guest && !active.main && main && <Link className="back" href={roomPath(id, main.id)}>Back to main room</Link>}
+        {!guest && !active.main && main && <RoomDestination className="back" href={roomPath(id, main.id)} name={main.name}>Back to main room</RoomDestination>}
         <Link href={roomPath(id, room) + "/wissen"} className="iconLabel"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}

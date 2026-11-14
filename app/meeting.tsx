@@ -28,7 +28,7 @@ export default function Meeting({ path, enabled }: { path: string; enabled: bool
     }
   }
 
-  return <section className="roomForm">
+  return <section className="roomForm" data-meeting-active={Boolean(access) || pending}>
     <h3 className="iconLabel"><Video className="navIcon" aria-hidden="true" />Meeting</h3>
     {!enabled ? <p className="muted">Meetings are not configured.</p>
       : access ? <Media {...access} connected={() => setConnected(true)} leave={() => { setConnected(false); setAccess(undefined); }} fail={() => {

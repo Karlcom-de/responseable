@@ -13,8 +13,6 @@ type ConverseWindow = Window & { converse?: { initialize: (options: object) => u
 function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const { resolvedTheme } = useTheme();
-  const theme = useRef(resolvedTheme);
-  theme.current = resolvedTheme;
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -36,6 +34,7 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
       doc.head.append(style);
       doc.body.append(doc.createElement('converse-root'));
       const script = doc.createElement('script');
+      script.type = 'module';
       script.src = new URL('converse.min.js', assets).href;
       script.onerror = () => { if (active) setFailed(true); };
       script.onload = async () => {
@@ -45,11 +44,12 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
           if (!client) throw new Error();
           await client.initialize({
             assets_path: assets.href, view_mode: 'embedded', singleton: true, i18n: 'en',
-            theme: theme.current === 'dark' ? 'dark' : 'default',
+            theme: 'default', dark_theme: 'dracula',
             authentication: 'login', auto_login: true, jid: credentials.jid, password: credentials.password,
             websocket_url: credentials.websocketUrl, discover_connection_methods: false,
             auto_join_rooms: [{ jid: credentials.roomJid, nick: credentials.nick }],
             persistent_store: 'sessionStorage', clear_cache_on_logout: true,
+            visible_toolbar_buttons: { call: false },
             allow_logout: false, allow_registration: false, auto_reconnect: true, loglevel: 'silent',
           });
         } catch { if (active) setFailed(true); }
@@ -61,7 +61,7 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
 
   return <>
     {failed && <p role="alert">Chat could not start. Reopen this room to try again.</p>}
-    <iframe className="converseFrame" title="Room chat messages" ref={frame} />
+    <iframe className="converseFrame" title="Room chat messages" style={{ colorScheme: resolvedTheme === 'dark' ? 'dark' : 'light' }} ref={frame} />
   </>;
 }
 
