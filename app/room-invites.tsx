@@ -107,8 +107,9 @@ export default function RoomInvites({ path, room }: { path: string; room: string
       {invites.length > 0 && <section>
         <h3>Active invitations</h3>
         <ul className="grid gap-3">{invites.map(invite => <li key={invite.id}>
-          <p>{invite.remainingUses} of {invite.maxUses} uses left · Expires {expiry.format(Number(invite.expires))}</p>
+          <p>{invite.remainingUses === 0 ? 'All uses redeemed' : `${invite.remainingUses} of ${invite.maxUses} uses left`} · Expires {expiry.format(Number(invite.expires))}</p>
           {revoke === invite.id ? <div className="flex flex-wrap gap-2">
+            <p className="w-full">Revoking ends access for guests who joined with this invitation.</p>
             <Button variant="destructive" disabled={pending} onClick={() => remove(invite.id)}>Confirm revoke</Button>
             <Button variant="ghost" disabled={pending} onClick={() => setRevoke(undefined)}>Cancel</Button>
           </div> : <Button variant="ghost" disabled={pending} onClick={() => setRevoke(invite.id)}>Revoke invite</Button>}

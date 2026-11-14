@@ -8,14 +8,14 @@ import { demo } from '../lib/store';
 import { logout } from './actions';
 import { ThemeSwitch } from './theme';
 
-export function Header({ name, guest = false }: { name?: string; guest?: boolean }) {
+export function Header({ name, guest = false, admin = false }: { name?: string; guest?: boolean; admin?: boolean }) {
   const brand = <><Image className="mark" src="/icon.svg" alt="" width={32} height={32} unoptimized /> ResponseAble</>;
   return <header className="top">
     {guest ? <strong className="brand">{brand}</strong> : <Link className="brand" href="/">{brand}</Link>}
     <div className="identity">
       <ThemeSwitch />
       {demo && <Badge variant="outline">Exercise mode</Badge>}
-      {name && <><span>{name}</span>{!guest && !demo && process.env.RESPONSEABLE_PUBLIC_ORIGIN && <Link href="/security" className="iconLabel"><KeyRound className="navIcon" aria-hidden="true" />Account security</Link>}<form action={logout}><Button type="submit" variant="ghost">Sign out</Button></form></>}
+      {name && <><span>{name}</span>{admin && <Link href="/accounts" className="iconLabel">Accounts</Link>}{!guest && !demo && process.env.RESPONSEABLE_PUBLIC_ORIGIN && <Link href="/security" className="iconLabel"><KeyRound className="navIcon" aria-hidden="true" />Account security</Link>}<form action={logout}><Button type="submit" variant="ghost">Sign out</Button></form></>}
     </div>
   </header>;
 }

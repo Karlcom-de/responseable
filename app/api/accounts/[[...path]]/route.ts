@@ -16,7 +16,11 @@ function encoded(value: string) {
 
 export async function GET() {
   if (!accountsEnabled() || (await session())?.role !== 'admin') return missing();
-  const accounts = await query('SELECT id,login,display_name AS "displayName",role,active FROM accounts ORDER BY login');
+  const accounts = await query(`
+    SELECT id,login,display_name AS "displayName",role,active,require_password_change AS "requiresPasswordChange",
+      EXISTS (SELECT 1 FROM operator_mfa WHERE operator=accounts.id::text) AS "mfaEnrolled"
+    FROM accounts ORDER BY login
+  `);
   const incidents = await query('SELECT id,title FROM incidents ORDER BY title,id');
   const assignments = await query('SELECT account_id AS "accountId",incident_id AS "incidentId" FROM incident_accounts');
   return Response.json({ accounts, incidents, assignments });

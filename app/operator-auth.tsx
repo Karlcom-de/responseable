@@ -16,36 +16,54 @@ async function authPost(path: string, body: unknown = {}) {
   return response.json();
 }
 
-export function SignIn() {
+export function SignIn({ identifyPasskey = false }: { identifyPasskey?: boolean }) {
   const [supportsPasskeys, setSupportsPasskeys] = useState(false);
-  const [step, setStep] = useState<'password' | 'totp' | 'recovery' | 'enroll'>('password');
+  const [step, setStep] = useState<'password' | 'change_password' | 'totp' | 'recovery' | 'enroll'>('password');
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [name, setName] = useState('');
+  const [status, setStatus] = useState('');
   useEffect(() => setSupportsPasskeys(browserSupportsWebAuthn()), []);
+  useEffect(() => {
+    if (step === 'password' && status) document.getElementById('auth-password')?.focus();
+  }, [step, status]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setPending(true);
     setError('');
+    setStatus('');
     try {
-      const body = step === 'password' ? { name: form.get('name'), password: form.get('password') } : { code: form.get('code') };
-      const { next } = await authPost(step, body);
+      const body = step === 'password' ? { name: form.get('name'), password: form.get('password') } : step === 'change_password' ? { password: form.get('password') } : { code: form.get('code') };
+      const { next } = await authPost(step.replace('_', '-'), body);
       if (next === 'done') location.replace('/');
-      else if (next === 'totp' || next === 'enroll') setStep(next);
+      else if (next === 'sign_in') {
+        setStatus('Password changed. Sign in with your new password.');
+        setStep('password');
+      }
+      else if (next === 'totp' || next === 'enroll' || next === 'change_password') setStep(next);
       else throw new Error();
-    } catch { setError('Sign-in could not be completed. Check your details and try again.'); }
+    } catch { setError(step === 'change_password'
+      ? 'Password could not be changed. Check the requirements and try again.'
+      : 'Sign-in could not be completed. Check your details and try again.'); }
     finally { setPending(false); }
   }
 
   if (step === 'enroll') return <SecuritySetup />;
   return <div className="grid gap-3">
+    {status && <p role="status">{status}</p>}
     {error && <Alert role="alert" variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
     {step === 'password' && supportsPasskeys && <div><Button disabled={pending} onClick={async () => {
+      if (identifyPasskey && !name.trim()) {
+        setError('Enter your username to use a passkey.');
+        document.getElementById('auth-name')?.focus();
+        return;
+      }
       setPending(true);
       setError('');
       try {
-        const optionsJSON = await authPost('passkey/options');
+        const optionsJSON = await authPost('passkey/options', identifyPasskey ? { name } : {});
         const credential = await startAuthentication({ optionsJSON });
         await authPost('passkey/verify', { credential });
         location.replace('/');
@@ -54,18 +72,20 @@ export function SignIn() {
     }}>Sign in with a passkey</Button></div>}
     <form key={step} onSubmit={signIn}><FieldGroup>
       {step === 'password' ? <>
-        <Field><FieldLabel htmlFor="auth-name">Username</FieldLabel><Input id="auth-name" name="name" autoComplete="username" required maxLength={80} /></Field>
+        <Field><FieldLabel htmlFor="auth-name">Username</FieldLabel><Input id="auth-name" name="name" value={name} onChange={event => setName(event.target.value)} autoComplete="username" required maxLength={80} /></Field>
         <Field><FieldLabel htmlFor="auth-password">Password</FieldLabel><Input id="auth-password" name="password" type="password" autoComplete="current-password" required maxLength={256} /></Field>
-      </> : <Field><FieldLabel htmlFor="auth-code">{step === 'totp' ? 'Authenticator code' : 'Recovery code'}</FieldLabel>
+      </> : step === 'change_password' ? <Field>
+        <FieldLabel htmlFor="new-password">New password</FieldLabel>
+        <Input id="new-password" name="password" type="password" autoComplete="new-password" required autoFocus minLength={16} maxLength={256} />
+        <p className="muted">Use at least 16 characters.</p>
+      </Field> : <Field><FieldLabel htmlFor="auth-code">{step === 'totp' ? 'Authenticator code' : 'Recovery code'}</FieldLabel>
         <Input id="auth-code" name="code" required autoFocus autoComplete={step === 'totp' ? 'one-time-code' : 'off'}
           inputMode={step === 'totp' ? 'numeric' : 'text'} maxLength={step === 'totp' ? 6 : 80} />
       </Field>}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" variant={step === 'password' && supportsPasskeys ? 'outline' : 'default'} disabled={pending}>{step === 'password' ? 'Sign in' : 'Verify code'}</Button>
-        {step !== 'password' && <>
-          <Button variant="outline" disabled={pending} onClick={() => { setError(''); setStep(step === 'totp' ? 'recovery' : 'totp'); }}>{step === 'totp' ? 'Use recovery code' : 'Use authenticator code'}</Button>
-          <Button variant="ghost" disabled={pending} onClick={() => { setError(''); setStep('password'); }}>Back to sign-in</Button>
-        </>}
+        <Button type="submit" variant={step === 'password' && supportsPasskeys ? 'outline' : 'default'} disabled={pending}>{step === 'password' ? 'Sign in' : step === 'change_password' ? 'Change password' : 'Verify code'}</Button>
+        {(step === 'totp' || step === 'recovery') && <Button variant="outline" disabled={pending} onClick={() => { setError(''); setStep(step === 'totp' ? 'recovery' : 'totp'); }}>{step === 'totp' ? 'Use recovery code' : 'Use authenticator code'}</Button>}
+        {step !== 'password' && <Button variant="ghost" disabled={pending} onClick={() => { setError(''); setStep('password'); }}>Back to sign-in</Button>}
       </div>
     </FieldGroup></form>
   </div>;
