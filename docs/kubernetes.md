@@ -73,3 +73,15 @@ Konfiguriere `livekit.example.yaml` mit passenden Medienpfaden, Sentinel-Passwö
 | Control-Plane-Knoten ausfallen lassen | API bleibt bei Quorum erreichbar. Der verbleibende Cluster plant Pods weiter. |
 
 Zusätzlich Lasttest mit Teilnehmerzahl und erwarteter gleichzeitiger Zahl von Räumen durchführen. LiveKit skaliert über Räume. Ein einzelnes Meeting bleibt an einen SFU-Knoten gebunden. Zwei laufende App-Replikate und ein HPA ersetzen weder ein verifiziertes Restore noch einen zweiten Telefonweg.
+
+## Production cutover
+
+Use one approved canonical HTTPS hostname and keep it stable for registered passkeys. Set `app.publicOrigin` to that exact origin and configure the TLS secret and ingress class. Verify externally to the cluster from the intended operator and guest networks. Configure `RESPONSEABLE_MFA_KEY` from the runtime secret store, back it up separately from the database, and require enrollment with `RESPONSEABLE_MFA_REQUIRED=true`. Put a per-source sign-in limit at the ingress. If setting `RESPONSEABLE_TRUSTED_CLIENT_IP_HEADER`, the ingress must overwrite the header, and direct pod access must be blocked.
+
+1. Build the verified Git revision once and pin its image digest in Helm. Confirm PostgreSQL backups and restore into an isolated database before applying the migration job.
+2. Deploy with `helm upgrade --install --atomic --wait`; verify `/health/live`, `/health/ready`, the deployed image digest and the ready replica count. Enrollment and guest tests use only synthetic data and inert providers.
+3. Verify authentication from the canonical HTTPS origin and check LiveKit signaling and media separately. Test audio and video from two client networks with working ICE or TURN. Kubernetes port-forward carries TCP only and does not establish production UDP reachability. A failing media port-forward can also terminate other forwards sharing its process.
+4. Confirm a pod disruption preserves existing sessions, documents and chat. Exercise database failover and the restore procedure before accepting a high-availability target.
+5. If the web rollout fails, use `helm rollback` to the previously verified release and retest readiness. Schema changes are additive for rollback. Restore from backup only when needed for data recovery, with the data-loss window stated explicitly.
+
+Revoking an invite blocks subsequent protected HTTP requests. A LiveKit connection already established under that invitation can remain active until disconnected. The join grant expires after two minutes and has no effect on an existing media connection. Optional AI setup is described in [AI configuration](ai.md).
