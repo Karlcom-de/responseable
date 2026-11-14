@@ -18,7 +18,7 @@ export function db() {
 
 export async function databaseReady() {
   const result = await db().query<{ demo: boolean }>(
-    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 12)',
+    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 13)',
   );
   return result.rows[0]?.demo === demo;
 }
