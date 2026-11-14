@@ -7,7 +7,7 @@ const fields = 'id, expires, max_uses AS "maxUses", max_uses - uses AS "remainin
 type Invite = { id: string; expires: string; maxUses: number; remainingUses: number };
 export const activeInvites = (room: string) => query<Invite>(`
   SELECT ${fields} FROM invitations
-  WHERE room = $1 AND expires > $2 AND revoked_at IS NULL AND uses < max_uses ORDER BY expires
+  WHERE room = $1 AND expires > $2 AND revoked_at IS NULL ORDER BY expires
 `, [room, Date.now()]);
 
 export async function issueInvite(room: string, maxUses = 1, minutes = 15) {

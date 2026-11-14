@@ -108,6 +108,7 @@ try {
       subject_id uuid NOT NULL REFERENCES accounts(id),
       action text NOT NULL
     );
+    ALTER TABLE auth_challenges ADD COLUMN IF NOT EXISTS credential_generation integer;
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS account_id uuid REFERENCES accounts(id);
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS credential_generation integer;
     CREATE INDEX IF NOT EXISTS sessions_account_id ON sessions(account_id);

@@ -1,18 +1,18 @@
 import { aiBudget, aiConfig, aiRequest, embedding } from '../../../../../lib/ai';
-import { query, roomAccess, roomPath } from '../../../../../lib/store';
+import { query, roomManagement, roomPath } from '../../../../../lib/store';
 import { getDocument } from '../../../../../lib/documents';
 
 type Context = { params: Promise<{ id: string; room: string }> };
 export async function GET(_: Request, { params }: Context) {
   const { id, room } = await params;
-  if ((await roomAccess(id, room))?.room !== null) return new Response(null, { status: 404 });
+  if (!await roomManagement(id, room)) return new Response(null, { status: 404 });
   return Response.json({ available: Boolean(aiConfig('CHAT') && aiConfig('EMBEDDINGS')) });
 }
 
 export async function POST(request: Request, { params }: Context) {
   const { id, room } = await params;
-  const current = await roomAccess(id, room);
-  if (current?.room !== null) return new Response(null, { status: 404 });
+  const current = await roomManagement(id, room);
+  if (!current) return new Response(null, { status: 404 });
   const settings = aiConfig('EMBEDDINGS');
   if (!settings || !aiConfig('CHAT')) return new Response(null, { status: 503 });
   if (!await aiBudget(current.name, 'RAG')) return new Response(null, { status: 429 });

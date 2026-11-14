@@ -1,5 +1,5 @@
 import { aiBudget, aiConfig, aiRequest } from '../../../../../lib/ai';
-import { query, roomAccess } from '../../../../../lib/store';
+import { query, roomAccess, roomManagement } from '../../../../../lib/store';
 
 type Context = { params: Promise<{ id: string; room: string }> };
 const retention = () => Math.max(1, Math.min(365, Number(process.env.RESPONSEABLE_TRANSCRIPT_RETENTION_DAYS) || 7));
@@ -16,7 +16,7 @@ export async function GET(_: Request, { params }: Context) {
   const { id, room } = await params;
   const current = await roomAccess(id, room);
   if (!current) return new Response(null, { status: 404 });
-  const canManage = current.room === null;
+  const canManage = Boolean(await roomManagement(id, room));
   const [settings] = await query<{ enabled: boolean; notes: string }>('SELECT enabled,notes FROM transcript_settings WHERE room=$1', [room]);
   return Response.json({
     available: Boolean(aiConfig('STT')), draftAvailable: canManage && Boolean(aiConfig('CHAT')), enabled: settings?.enabled ?? false,
@@ -26,8 +26,8 @@ export async function GET(_: Request, { params }: Context) {
 
 export async function POST(request: Request, { params }: Context) {
   const { id, room } = await params;
-  const current = await roomAccess(id, room);
-  if (!current || current.room !== null) return new Response(null, { status: 404 });
+  const current = await roomManagement(id, room);
+  if (!current) return new Response(null, { status: 404 });
   const data = await request.json().catch(() => null);
   if (data?.action === 'enable' && typeof data.enabled === 'boolean') {
     if (data.enabled && !aiConfig('STT')) return new Response(null, { status: 503 });
@@ -63,7 +63,7 @@ export async function POST(request: Request, { params }: Context) {
 
 export async function DELETE(_: Request, { params }: Context) {
   const { id, room } = await params;
-  if ((await roomAccess(id, room))?.room !== null) return new Response(null, { status: 404 });
+  if (!await roomManagement(id, room)) return new Response(null, { status: 404 });
   await query(`
     WITH off AS (
       UPDATE transcript_settings SET enabled=false, notes='', generation=generation+1 WHERE room=$1

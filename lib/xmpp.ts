@@ -1,7 +1,7 @@
 import 'server-only';
 import { affiliate, identity, password } from '../scripts/xmpp/admin.mjs';
 import { roomNickname } from '../scripts/xmpp/nickname.mjs';
-import { db } from './store';
+import { accountsEnabled, db } from './store';
 
 export async function xmppRoom(room: string) {
   return (await db().query<{ muc: string }>('SELECT muc FROM xmpp_rooms WHERE room=$1', [room])).rows[0];
@@ -22,12 +22,16 @@ export async function bootstrap(room: string, sessionHash: string) {
     await connection.query('BEGIN');
     const { rows: [grant] } = await connection.query<{ expires: string; muc: string; display_name: string; room_title: string }>(`
       SELECT s.expires, x.muc, s.name AS display_name, r.name AS room_title
-      FROM sessions s JOIN xmpp_rooms x ON x.room=$1 JOIN rooms r ON r.id=x.room
+      FROM sessions s JOIN xmpp_rooms x ON x.room=$1 JOIN rooms r ON r.id=x.room LEFT JOIN accounts a ON a.id=s.account_id
       WHERE s.hash=$2 AND (s.room IS NULL OR s.room=$1) AND s.expires>$3
+      AND (s.room IS NOT NULL OR NOT $4 OR (
+        a.active AND NOT a.require_password_change AND a.credential_generation=s.credential_generation AND s.mfa_verified
+        AND (a.role='admin' OR EXISTS (SELECT 1 FROM incident_accounts ia WHERE ia.account_id=a.id AND ia.incident_id=r.incident))
+      ))
       AND (s.invite_id IS NULL OR EXISTS (
         SELECT 1 FROM invitations i WHERE i.id=s.invite_id AND i.revoked_at IS NULL AND i.expires>$3
       )) FOR UPDATE OF s
-    `, [room, sessionHash, Date.now()]);
+    `, [room, sessionHash, Date.now(), accountsEnabled()]);
     if (!grant) return;
     const user = identity(config.secret, sessionHash, room);
     const jid = user + '@' + config.domain;
@@ -54,13 +58,20 @@ export async function reconcileXmpp(revocationsOnly: boolean, room?: string, ses
     await connection.query('BEGIN');
     const { rows } = await connection.query<{ room: string; session_hash: string; jid: string; muc: string; active: boolean }>(`
       SELECT g.room,g.session_hash,g.jid,x.muc,
-        COALESCE(s.expires>$1 AND (s.invite_id IS NULL OR (i.revoked_at IS NULL AND i.expires>$1)),false) AS active
-      FROM xmpp_grants g JOIN xmpp_rooms x ON x.room=g.room
+        grant_state.active
+      FROM xmpp_grants g JOIN xmpp_rooms x ON x.room=g.room JOIN rooms r ON r.id=g.room
       LEFT JOIN sessions s ON s.hash=g.session_hash LEFT JOIN invitations i ON i.id=s.invite_id
+      LEFT JOIN accounts a ON a.id=s.account_id
+      CROSS JOIN LATERAL (SELECT COALESCE(s.expires>$1
+        AND (s.invite_id IS NULL OR (i.revoked_at IS NULL AND i.expires>$1))
+        AND (s.room IS NOT NULL OR NOT $5 OR (
+          a.active AND NOT a.require_password_change AND a.credential_generation=s.credential_generation AND s.mfa_verified
+          AND (a.role='admin' OR EXISTS (SELECT 1 FROM incident_accounts ia WHERE ia.account_id=a.id AND ia.incident_id=r.incident))
+        )),false) AS active) grant_state
       WHERE ($2::text IS NULL OR g.room=$2) AND ($3::text IS NULL OR g.session_hash=$3)
-        AND (NOT $4 OR NOT COALESCE(s.expires>$1 AND (s.invite_id IS NULL OR (i.revoked_at IS NULL AND i.expires>$1)),false))
+        AND (NOT $4 OR NOT grant_state.active)
       LIMIT 20 FOR UPDATE OF g ${revocationsOnly ? 'SKIP LOCKED' : ''}
-    `, [Date.now(), room ?? null, sessionHash ?? null, revocationsOnly]);
+    `, [Date.now(), room ?? null, sessionHash ?? null, revocationsOnly, accountsEnabled()]);
     if (!revocationsOnly && !rows[0]?.active) throw Error('XMPP grant no longer active');
     for (const grant of rows) {
       await affiliate(config.admin, config.bearer, grant.muc, config.service, grant.jid, grant.active);
