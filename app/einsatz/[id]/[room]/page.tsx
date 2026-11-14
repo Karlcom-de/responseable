@@ -63,7 +63,7 @@ export default async function Workspace({ params, searchParams }: {
           board={<Board path={roomPath(id, room)} />} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
-      <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo && process.env.XMPP_EXERCISE_LOOPBACK !== 'true'} />
+      <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo && process.env.XMPP_EXERCISE_LOOPBACK !== 'true'} roomTitle={active.name} />
     </div>
   </main></>;
 }

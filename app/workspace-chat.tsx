@@ -6,11 +6,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import RoomChat from './room-chat';
 
-type Credentials = { jid: string; password: string; roomJid: string; websocketUrl: string; nick: string };
+type Credentials = { jid: string; password: string; roomJid: string; websocketUrl: string; nick: string; roomTitle?: string };
 type Bootstrap = { assetsBase: string; credentials: Credentials };
-type ConverseWindow = Window & { converse?: { initialize: (options: object) => unknown } };
+type ConverseWindow = Window & { JSON: JSON; converse?: { initialize: (options: object) => unknown } };
 
-function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
+function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitle: string }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const { resolvedTheme } = useTheme();
   const selectedTheme = resolvedTheme === 'dark' ? 'dracula' : 'default';
@@ -33,7 +33,21 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
       css.href = new URL('converse.min.css', assets).href;
       doc.head.append(css);
       const style = doc.createElement('style');
-      style.textContent = 'html,body,converse-root{height:100%;margin:0}';
+      style.textContent = `
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+        converse-root { display: block; height: 100%; }
+        .conversejs.converse-embedded .chatroom,
+        .conversejs.converse-embedded .chatroom-body,
+        .conversejs.converse-embedded .chat-area,
+        .conversejs.converse-embedded .chat-content { min-width: 0; min-height: 0; }
+        .conversejs .chat-content__messages { overscroll-behavior-y: contain; }
+        .conversejs .chat-msg__text, .conversejs .chat-msg__author,
+        .conversejs .chatbox-title__text { overflow-wrap: anywhere; }
+        .conversejs .chatbox-title__text { white-space: normal; }
+        @media (max-height: 400px) {
+          .conversejs .chat-textarea { min-height: 2.5rem; }
+        }
+      `;
       doc.head.append(style);
       const root = doc.createElement('converse-root');
       doc.body.append(root);
@@ -52,24 +66,25 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
       script.onload = async () => {
         if (!active) return;
         try {
-          const client = (frame.current?.contentWindow as ConverseWindow | null)?.converse;
-          if (!client) throw new Error();
-          await client.initialize({
+          const win = frame.current?.contentWindow as ConverseWindow | null;
+          if (!win?.converse) throw new Error();
+          // Converse 12 checks room criteria with instanceof Object inside the iframe.
+          await win.converse.initialize(win.JSON.parse(JSON.stringify({
             assets_path: assets.href, view_mode: 'embedded', singleton: true, i18n: 'en',
             theme: 'default', dark_theme: 'dracula',
             authentication: 'login', auto_login: true, jid: credentials.jid, password: credentials.password,
             websocket_url: credentials.websocketUrl, discover_connection_methods: false,
-            auto_join_rooms: [credentials.roomJid], nickname: credentials.nick,
+            auto_join_rooms: [{ jid: credentials.roomJid, nick: credentials.nick, name: credentials.roomTitle || roomTitle }],
             persistent_store: 'sessionStorage', clear_cache_on_logout: true,
             visible_toolbar_buttons: { call: false },
             allow_logout: false, allow_registration: false, auto_reconnect: true, loglevel: 'error',
-          });
+          })));
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
       return () => { active = false; observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
-  }, [bootstrap]);
+  }, [bootstrap, roomTitle]);
 
   useEffect(() => {
     const root = frame.current?.contentDocument?.querySelector('converse-root');
@@ -83,7 +98,7 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
   </>;
 }
 
-export default function WorkspaceChat({ path, demo }: { path: string; demo: boolean }) {
+export default function WorkspaceChat({ path, demo, roomTitle }: { path: string; demo: boolean; roomTitle: string }) {
   const [result, setResult] = useState<Bootstrap | 'native' | 'unavailable' | null>(demo ? 'native' : null);
   const [attempt, retry] = useState(0);
   useEffect(() => {
@@ -106,12 +121,12 @@ export default function WorkspaceChat({ path, demo }: { path: string; demo: bool
   }, [path, demo, attempt]);
 
   if (result === 'native') return <RoomChat path={path} />;
-  return <Card className="panel chat" id="chat" aria-label="Room chat">
-    <h2>Room chat</h2>
+  return <Card className="panel chat embeddedChat" id="chat" aria-label="Room chat">
+    <h2>Room chat<span className="sr-only"> · {roomTitle}</span></h2>
     {!result ? <p role="status">Connecting to room chat…</p>
       : result === 'unavailable' ? <div className="grid gap-2">
         <p role="alert">Room chat is unavailable. The meeting and whiteboard are still accessible.</p>
         <div><Button variant="outline" onClick={() => { setResult(null); retry(value => value + 1); }}>Retry chat connection</Button></div>
-      </div> : <EmbeddedChat bootstrap={result} />}
+      </div> : <EmbeddedChat bootstrap={result} roomTitle={roomTitle} />}
   </Card>;
 }

@@ -179,11 +179,18 @@ nav a span{color:var(--accent)}
 
 .incidentStage { display: grid; gap: .75rem; }
 .incidentStage[data-view="board"] .mediaGrid { display: none; }
-.converseFrame { width: 100%; height: clamp(360px, 65dvh, 800px); border: 1px solid var(--line); border-radius: .5rem; }
+.converseFrame { display: block; width: 100%; height: clamp(15rem, calc(100dvh - 11rem), 44rem); border: 1px solid var(--line); border-radius: .5rem; }
+.embeddedChat { min-width: 0; }
+.workspace .rooms a, .workspace .roomTitle { overflow-wrap: anywhere; }
+@media (min-width: 901px) {
+  .workspaceGrid { grid-template-columns: minmax(10rem, .62fr) minmax(0, 1.55fr) minmax(19rem, 1fr); }
+  .embeddedChat { top: .75rem; }
+}
 @media (max-width: 580px) {
   .workspaceShortcuts { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
   .workspaceGrid > [id] { scroll-margin-top: 4rem; }
-  .converseFrame { height: max(280px, 65dvh); }
+  .converseFrame { height: clamp(13rem, calc(100dvh - 9rem), 38rem); }
+  .workspace .embeddedChat { padding: .625rem; }
 }
 
 @media (max-width: 580px) {
