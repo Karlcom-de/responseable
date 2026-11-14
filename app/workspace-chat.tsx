@@ -13,6 +13,9 @@ type ConverseWindow = Window & { converse?: { initialize: (options: object) => u
 function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const { resolvedTheme } = useTheme();
+  const selectedTheme = resolvedTheme === 'dark' ? 'dracula' : 'default';
+  const theme = useRef(selectedTheme);
+  theme.current = selectedTheme;
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -32,7 +35,16 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
       const style = doc.createElement('style');
       style.textContent = 'html,body,converse-root{height:100%;margin:0}';
       doc.head.append(style);
-      doc.body.append(doc.createElement('converse-root'));
+      const root = doc.createElement('converse-root');
+      doc.body.append(root);
+      const syncTheme = () => {
+        for (const attr of ['data-bs-theme', 'data-converse-theme']) {
+          if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
+        }
+      };
+      const observer = new MutationObserver(syncTheme);
+      observer.observe(root, { attributes: true, attributeFilter: ['data-bs-theme', 'data-converse-theme'] });
+      syncTheme();
       const script = doc.createElement('script');
       script.type = 'module';
       script.src = new URL('converse.min.js', assets).href;
@@ -55,9 +67,15 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap]);
+
+  useEffect(() => {
+    const root = frame.current?.contentDocument?.querySelector('converse-root');
+    root?.setAttribute('data-bs-theme', selectedTheme);
+    root?.setAttribute('data-converse-theme', selectedTheme);
+  }, [selectedTheme]);
 
   return <>
     {failed && <p role="alert">Chat could not start. Reopen this room to try again.</p>}
