@@ -12,3 +12,4 @@ tar xzf "$archive" --strip-components=2 -C public/converse package/dist
 tar xzf "$archive" --strip-components=1 -C public/converse package/LICENSE package/COPYRIGHT
 test -s public/converse/converse.min.js
 test -s public/converse/converse.min.css
+node scripts/xmpp/remove-composer-autofocus.mjs public/converse/converse.min.js
