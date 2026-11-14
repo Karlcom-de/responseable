@@ -52,6 +52,7 @@ For a real instance, follow the [Kubernetes production installation](docs/kubern
 
 - **Meetings.** For a local real-mode test, run `livekit-server --dev` on the loopback interface. Set `LIVEKIT_URL=ws://127.0.0.1:7880`, `LIVEKIT_API_KEY=devkey` and `LIVEKIT_API_SECRET=secret`. Use your own keys, WSS and tested media/TURN routing in production. [LiveKit self-hosting](https://docs.livekit.io/transport/self-hosting/)
 - **Whiteboard.** Excalidraw synchronizes shapes, text, arrows, lines, freehand strokes and frames. Each room supports up to 2,000 elements and 2 MB, including deletion markers.
+- **On-call automation.** Configure an [outgoing alert webhook](docs/alert-webhook.md) for a room manager to explicitly trigger a self-hosted workflow.
 - **Phone alerts.** Select SMS and outbound voice providers independently: Android, an authenticated HTTP webhook, or AWS End User Messaging. LiveKit SIP can dial a participant directly into a room. [Provider setup and webhook contract](docs/telephony.md)
 
 ## Deploy and verify

@@ -5,7 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
 import { methodLabels, notificationsAvailable, statusLabels, providerLabels, type Provider, type Method, type Status } from '../lib/notifications';
 import { smsInviteToken } from '../lib/invites';
-import { query } from '../lib/store';
+import AlertWebhook from './alert-webhook';
+import { alertEndpoint } from '../lib/alert-webhook.mjs';
+import { accountsEnabled, demo, roomPath, query } from '../lib/store';
 import { confirmNotification, prepareNotification } from './actions';
 import { Notice } from './shell';
 
@@ -15,6 +17,8 @@ export default async function Notifications({ incident, room, owner, draft, erro
   incident: string; room: string; owner: string; draft?: string; error: boolean;
 }) {
   const available = notificationsAvailable();
+  const webhookEnabled = !demo && accountsEnabled() &&
+    !!alertEndpoint(process.env.RESPONSEABLE_ALERT_WEBHOOK_URL, process.env.RESPONSEABLE_ALERT_WEBHOOK_TOKEN);
   const attempts = await query<Attempt>(`
     SELECT n.id, n.number, n.method, n.provider, n.status, n.created FROM notifications n
     JOIN rooms ON rooms.id = n.room WHERE rooms.incident = $1 AND n.status <> 'draft'
@@ -27,6 +31,7 @@ export default async function Notifications({ incident, room, owner, draft, erro
   const visiblePreview = preview && (preview.method !== "sms" || available.sms);
   return <section className="roomForm">
     <h3 className="iconLabel"><BellRing className="navIcon" aria-hidden="true" />Alerting</h3>
+    {webhookEnabled && <AlertWebhook path={roomPath(incident, room)} />}
     {error && <Notice>Check the phone number and provider configuration.</Notice>}
     {!Object.values(available).some(Boolean) ? <p className="muted">Phone alerting is not configured.</p>
       : <form className="stack" action={prepareNotification.bind(null, incident, room)}>

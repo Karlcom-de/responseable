@@ -16,3 +16,5 @@ The receiver verifies the Authorization bearer token and deduplicates the Idempo
 ```
 
 HTTP 2xx records acceptance by the receiver. A timeout, redirect or other failure records an unclear outcome. Check the receiver's record for that event ID before sending a new alert. Repeating the same ID retrieves its recorded status and does not dispatch again.
+
+For an on-call workflow, preconfigure the destination team and escalation policy in the receiver. After Header Auth and durable deduplication, queue a high-priority message such as “Incident alert received. Open the incident workspace and acknowledge in the on-call tool.” Keep the delivery channel and contact details in the receiver's configuration. Have the receiver return 202 after accepting the event. HTTP acceptance records receipt of the webhook. The on-call workflow owns notification delivery and human acknowledgement.
