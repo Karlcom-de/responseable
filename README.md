@@ -2,7 +2,7 @@
 
 ResponseAble is a self-hosted incident war room for coordinating responders across rooms, chat, whiteboards and meetings.
 
-![Desktop incident room with room navigation, a situation brief and chat](docs/incident-room-desktop.webp)
+![Desktop exercise workspace with room navigation, a shared whiteboard and Converse chat](docs/incident-room-desktop.webp)
 
 ## Try it on Kubernetes
 
@@ -30,7 +30,7 @@ The [GitHub mirror](https://github.com/Karlcom-de/responseable) can replace the 
 
 ![A runbook open in the desktop knowledge workspace](docs/runbook-desktop.webp)
 
-![Guest incident room and chat on a mobile display](docs/incident-room-mobile.webp)
+![Converse room chat in a mobile guest view](docs/incident-room-mobile.webp)
 
 ## Quick start
 
