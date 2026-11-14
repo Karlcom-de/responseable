@@ -47,3 +47,11 @@ SMOKE_URL=http://127.0.0.1:3180 SMOKE_OPERATOR="$OPERATOR" \
 ```
 
 Set `SMOKE_SYNTHETIC_PROVIDERS=1` only when both channels are wired to inert fixtures. The test then expects Android SMS and webhook voice. The fixture should return HTTP 503 for the voice destination ending in 0198.
+
+For the two-client media and whiteboard check, set `SMOKE_URL`, `SMOKE_OPERATOR`, and `SMOKE_PASSWORD_FILE` for a disposable real-mode staging instance, then run:
+
+```sh
+node scripts/media-smoke.mjs
+```
+
+Run against Chromium with a controlled screen source on a disposable test desktop. Set `SMOKE_CANVAS_SCREEN=1` to use a synthetic source instead. The test confirms decoded camera and screen-share frames, non-silent remote microphone audio, chat persistence, and shared whiteboard state in a new tab during the meeting. The media server must be reachable by both browser contexts. With an isolated local LiveKit server this checks application integration and local media transport. Production network validation is separate.

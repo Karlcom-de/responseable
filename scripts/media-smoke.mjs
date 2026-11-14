@@ -83,6 +83,34 @@ try {
     await page.getByRole('button', { name: 'Refresh chat' }).click();
     assert.equal(await page.getByLabel('Message', { exact: true }).inputValue(), 'Draft through refresh');
     await guest.locator('video').filter({ visible: true }).first().waitFor();
+    await page.getByRole('button', { name: 'Open whiteboard' }).click();
+    const canvas = page.locator('canvas.interactive');
+    await canvas.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1200);
+    const { x, y } = await canvas.boundingBox();
+    await page.mouse.click(x + 100, y + 165);
+    await page.keyboard.press('r');
+    await page.mouse.move(x + 100, y + 165);
+    await page.mouse.down();
+    await page.mouse.move(x + 145, y + 205, { steps: 5 });
+    await page.mouse.up();
+    for (let attempt = 0; ; attempt++) {
+      const { elements } = await (await ops.request.get(baseURL + first + '/board')).json();
+      if (elements.length) break;
+      assert(attempt < 20, 'Inline whiteboard change did not persist');
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+    const sharedState = ops.waitForEvent('response', response => new URL(response.url()).pathname === first + '/board' && response.ok());
+    const opened = ops.waitForEvent('page');
+    await page.getByRole('link', { name: /Full-page whiteboard/ }).click();
+    const board = await opened;
+    await board.waitForURL(baseURL + first + '/whiteboard');
+    await board.locator('canvas.interactive').waitFor();
+    assert((await (await sharedState).json()).elements.length > 0);
+    await page.getByRole('button', { name: 'Leave meeting' }).waitFor();
+    await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video =>
+      video.videoWidth > 0 && video.readyState >= 2));
+    await board.close();
     await page.getByRole('button', { name: 'Share screen', exact: true }).click();
     await guest.waitForFunction(() => !document.querySelector('[data-lk-source="screen_share"] video'));
     await page.getByRole('button', { name: 'Microphone', exact: true }).click();
@@ -95,6 +123,7 @@ try {
     await page.getByRole('heading', { name: 'Separate chat' }).waitFor();
     const separate = new URL(page.url()).pathname;
     assert.equal((await guest.request.get(baseURL + separate + '/chat')).status(), 404);
+    assert.equal((await guest.request.get(baseURL + separate + '/whiteboard')).status(), 404);
     assert.deepEqual((await (await ops.request.get(baseURL + separate + '/chat')).json()).messages, []);
     for (const text of [message, reply]) await guest.getByRole('log').getByText(text, { exact: true }).waitFor();
     console.log('Bidirectional chat, draft refresh, mute, stop sharing, leave and revisit passed.');
