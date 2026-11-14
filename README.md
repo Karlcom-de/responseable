@@ -6,6 +6,21 @@
 
 The application interface is in German. ResponseAble runs with PostgreSQL. LiveKit and phone-alert providers can be configured independently.
 
+## Try it on Kubernetes
+
+You need Git, a POSIX shell and an authenticated `kubectl` context. The cluster must allow you to create a test namespace, pull public Node and PostgreSQL images, and reach npm from the build pod. Allow approximately 3 GiB of build storage and memory. The PostgreSQL sidecar uses an unconfined AppArmor profile for compatibility with K3s. Choose a development cluster where that profile is allowed.
+
+```sh
+git clone https://github.com/Karlcom-de/responseable.git
+cd responseable && ./scripts/kubernetes-exercise.sh
+```
+
+Open **http://127.0.0.1:3190** and select **Übungsleitstelle öffnen**. Try the seeded rooms, room chat and whiteboard. The script builds the checked-out commit in Kubernetes, migrates the local PostgreSQL sidecar, waits for readiness and forwards the loopback port. The exercise needs no local Docker, npm, secrets or storage class. Data survives page reloads and container restarts in the same pod. Pod replacement discards it. Re-running the same commit keeps the current pod.
+
+The [Gitea mirror](https://tea.karlcom.de/karl/responseable) can replace the GitHub clone URL. Stop forwarding with Ctrl+C. Remove the exercise with `kubectl delete namespace responseable-exercise`, or use the namespace selected via `RESPONSEABLE_EXERCISE_NAMESPACE`.
+
+While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/ready`. Video, phone alerts and external guest access are outside the default exercise. Use a private HTTPS hostname for remote guest sharing and production passkeys. See [Kubernetes deployment](docs/kubernetes.md) and [staging smoke tests](docs/staging.md) for those environments.
+
 ## What you can do
 
 - Open an incident with a command room and add workstream rooms as the response evolves.

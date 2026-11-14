@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: responseable-exercise
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: responseable-exercise}
+  template:
+    metadata:
+      labels: {app: responseable-exercise}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      initContainers:
+        - name: build
+          image: node:24-bookworm-slim
+          workingDir: /workspace
+          command: [sh, -ec]
+          args:
+            - |
+              tar xzf /source/source.tgz
+              sed -i 's/experimental: {/experimental: { workerThreads: true, cpus: 2, /' next.config.ts
+              npm ci --no-audit --no-fund
+              npm run build
+              cp -r .next/static .next/standalone/.next/
+              cp -r public .next/standalone/
+              mkdir -p .next/standalone/scripts
+              cp scripts/migrate.mjs .next/standalone/scripts/
+          env:
+            - {name: NEXT_TELEMETRY_DISABLED, value: "1"}
+          securityContext: &node
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi, ephemeral-storage: 1Gi}
+            limits: {cpu: "2", memory: 3Gi, ephemeral-storage: 3Gi}
+          volumeMounts:
+            - {name: workspace, mountPath: /workspace}
+            - {name: source, mountPath: /source, readOnly: true}
+      containers:
+        - name: web
+          image: node:24-bookworm-slim
+          workingDir: /workspace/.next/standalone
+          command: [sh, -ec]
+          args:
+            - |
+              for attempt in $(seq 1 30); do
+                if node scripts/migrate.mjs; then exec node server.js; fi
+                sleep 2
+              done
+              exit 1
+          env:
+            - {name: PORT, value: "3000"}
+            - {name: HOSTNAME, value: "0.0.0.0"}
+            - {name: NEXT_TELEMETRY_DISABLED, value: "1"}
+            - {name: RESPONSEABLE_MODE, value: demo}
+            - {name: RESPONSEABLE_SECURE_COOKIE, value: "false"}
+            - {name: RESPONSEABLE_PUBLIC_ORIGIN, value: "http://127.0.0.1:3190"}
+            - {name: DATABASE_URL, value: "postgres://exercise@127.0.0.1:5432/exercise"}
+          securityContext: *node
+          ports: [{name: http, containerPort: 3000}]
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 40
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+          livenessProbe:
+            httpGet: {path: /health/live, port: http}
+          volumeMounts:
+            - {name: workspace, mountPath: /workspace}
+        - name: postgres
+          image: postgres:16-alpine
+          args: [postgres, -c, listen_addresses=127.0.0.1]
+          securityContext:
+            # K3s AppArmor defaults can deny PostgreSQL shared-memory operations.
+            appArmorProfile: {type: Unconfined}
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          env:
+            - {name: POSTGRES_HOST_AUTH_METHOD, value: trust}
+            - {name: POSTGRES_DB, value: exercise}
+            - {name: POSTGRES_USER, value: exercise}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          volumeMounts:
+            - {name: database, mountPath: /var/lib/postgresql/data}
+      volumes:
+        - {name: workspace, emptyDir: {sizeLimit: 3Gi}}
+        - {name: database, emptyDir: {sizeLimit: 512Mi}}
+        - name: source
+          configMap: {name: responseable-exercise-source}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: responseable-exercise
+spec:
+  podSelector:
+    matchLabels: {app: responseable-exercise}
+  policyTypes: [Ingress]
+  ingress: []
