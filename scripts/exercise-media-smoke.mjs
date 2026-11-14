@@ -7,6 +7,7 @@ const browser = await chromium.launch({
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--auto-select-desktop-capture-source=Entire screen', '--enable-usermedia-screen-capturing'],
 });
 try {
+  const marker = crypto.randomUUID();
   const operator = await browser.newPage({ permissions: ['camera', 'microphone'] });
   const guest = await browser.newPage({ permissions: ['camera', 'microphone'] });
   await operator.goto(origin);
@@ -28,10 +29,20 @@ try {
   await operator.getByRole("button", { name: "Share screen", exact: true }).click();
   await guest.waitForFunction(() => [...document.querySelectorAll("[data-lk-source=screen_share] video")].some(video => video.videoWidth > 0 && video.readyState >= 2));
   for (const [sender, recipient, label] of [[operator, guest, "Operator"], [guest, operator, "Guest"]]) {
-    const text = label + " in call " + Date.now();
+    const text = label + " in call " + marker;
     await sender.getByLabel("Message", { exact: true }).fill(text);
     await sender.getByRole("button", { name: "Send", exact: true }).click();
     await recipient.getByRole("log").getByText(text, { exact: true }).waitFor();
+  }
+  const endpoint = operator.url() + "/chat";
+  const key = crypto.randomUUID();
+  const retry = "Repeated request " + marker;
+  const options = { data: retry, headers: { origin, "Idempotency-Key": key } };
+  const responses = await Promise.all([operator.request.post(endpoint, options), operator.request.post(endpoint, options)]);
+  assert(responses.every(response => response.status() === 204));
+  const { messages } = await (await operator.request.get(endpoint)).json();
+  for (const text of ["Operator in call " + marker, "Guest in call " + marker, retry]) {
+    assert.equal(messages.filter(message => message.body === text).length, 1);
   }
   await operator.getByRole("button", { name: "Whiteboard view" }).click();
   const popup = operator.waitForEvent("popup");
@@ -45,5 +56,6 @@ try {
   await operator.getByRole("button", { name: "Share screen", exact: true }).click();
   await guest.waitForFunction(() => !document.querySelector("[data-lk-source=screen_share] video"));
   assert((await fetch(origin + '/health/ready')).ok);
+  console.log('Stored chat count: one row per message and repeated delivery key.');
   console.log('Kubernetes exercise delivered remote camera, microphone, native screen sharing, two-way chat and whiteboard continuity.');
 } finally { await browser.close(); }
