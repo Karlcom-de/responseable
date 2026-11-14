@@ -179,32 +179,31 @@ nav a span{color:var(--accent)}
 
 .incidentStage { display: grid; gap: .75rem; }
 .incidentStage[data-view="board"] .mediaGrid { display: none; }
-.converseFrame { display: block; width: 100%; height: clamp(15rem, calc(100dvh - 11rem), 44rem); border: 1px solid var(--line); border-radius: .5rem; }
+.converseFrame { display: block; width: 100%; height: clamp(18rem, calc(100dvh - 10rem), 42rem); border: 1px solid var(--line); border-radius: .5rem; }
 .embeddedChat { min-width: 0; }
 .workspace .rooms a, .workspace .roomTitle { overflow-wrap: anywhere; }
-@media (min-width: 901px) {
+
+@media (min-width: 1101px) {
   .workspaceGrid { grid-template-columns: minmax(10rem, .62fr) minmax(0, 1.55fr) minmax(19rem, 1fr); }
   .embeddedChat { top: .75rem; }
 }
-@media (max-width: 580px) {
-  .workspaceShortcuts { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
-  .workspaceGrid > [id] { scroll-margin-top: 4rem; }
-  .converseFrame { height: clamp(13rem, calc(100dvh - 9rem), 38rem); }
-  .workspace .embeddedChat { padding: .625rem; }
-}
-
-@media (max-width: 580px) {
-  .workspaceGrid > .chat { grid-row: 1; }
-  .workspaceGrid > .situation { grid-row: 2; }
-  .workspaceGrid > .rooms { grid-row: 3; }
-}
-
 .mobileMeetingStatus { display: none; }
 .workspace:has([data-meeting-connected="true"]) .mobileMeetingStatus { display: inline; }
-#room-meeting { scroll-margin-top: 7rem; }
-@media (max-width: 580px) {
-  .workspaceShortcuts a { align-items: center; min-height: 2.5rem; padding: .35rem .55rem; font-size: .8125rem; }
+#room-meeting { scroll-margin-top: 5.5rem; }
+@media (max-width: 1100px) {
+  .workspace { max-width: 58rem; }
+  .workspaceGrid { grid-template-columns: minmax(0, 1fr); }
+  .workspaceGrid > .chat { grid-area: 1 / 1; position: static; }
+  .workspaceGrid > .situation { grid-area: 2 / 1; }
+  .workspaceGrid > .rooms { grid-area: 3 / 1; }
+  .workspaceShortcuts { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
+  .workspaceShortcuts a { align-items: center; min-height: 2.5rem; padding: .35rem .55rem; font-size: .8125rem; background: var(--panel); border: 1px solid var(--line); }
   .workspaceShortcuts .mobileMeetingLink { font-weight: 650; }
+  .workspaceGrid > [id] { scroll-margin-top: 4rem; }
+  .workspace .embeddedChat { padding: .625rem; }
   .incidentStage [data-slot="button"] { white-space: normal; }
   .mediaControls button { min-height: 2.5rem; }
+}
+@media (max-height: 650px) {
+  .workspace .mediaGrid { height: clamp(8rem, 30dvh, 12rem); }
 }

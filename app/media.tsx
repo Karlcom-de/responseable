@@ -13,7 +13,6 @@ function Conference({ showShare, onShareChange }: { showShare: boolean; onShareC
   const sharing = Boolean(share);
   useEffect(() => { onShareChange(sharing); return () => onShareChange(false); }, [sharing, onShareChange]);
   return <>
-    <div className="mediaGrid">{showShare ? share ? <FocusLayout trackRef={share} /> : <p className="muted">No screen is being shared.</p> : <GridLayout tracks={tracks.filter(track => track.source === Track.Source.Camera)}><ParticipantTile /></GridLayout>}</div>
     <RoomAudioRenderer />
     <p className="muted" role="status">{connection === ConnectionState.Reconnecting ? "Reconnecting to meeting…" : connection === ConnectionState.Connected ? "Meeting connected" : "Connecting to meeting…"}</p>
     <StartAudio label="Enable meeting audio" />
@@ -27,6 +26,7 @@ function Conference({ showShare, onShareChange }: { showShare: boolean; onShareC
         onDeviceError={() => setError('Could not share the screen. Allow screen capture and choose a tab, window or display.')} >Share screen</TrackToggle> : <span className="muted">Screen sharing is unavailable on this device.</span>}
       <DisconnectButton>Leave meeting</DisconnectButton>
     </div>
+    <div className="mediaGrid">{showShare ? share ? <FocusLayout trackRef={share} /> : <p className="muted">No screen is being shared.</p> : <GridLayout tracks={tracks.filter(track => track.source === Track.Source.Camera)}><ParticipantTile /></GridLayout>}</div>
   </>;
 }
 
