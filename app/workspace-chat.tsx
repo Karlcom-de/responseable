@@ -46,7 +46,9 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         .conversejs.converse-embedded .chat-msg__body--wrapper {
           min-width: 0; min-height: 0; max-width: 100%;
         }
-        .conversejs.converse-embedded .chatroom { width: 100%; }
+        converse-root.converse-embedded converse-muc.chatbox.chatroom {
+          width: 100% !important; min-width: 0 !important; max-width: 100%; flex-shrink: 1;
+        }
         .conversejs .chat-content__notifications,
         .conversejs .chat-content__notifications *,
         .conversejs .chat-msg__text a { white-space: normal; overflow-wrap: anywhere; }
