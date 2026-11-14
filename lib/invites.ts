@@ -1,4 +1,5 @@
 import 'server-only';
+import { reconcileXmpp } from "./xmpp";
 import { createHmac } from 'node:crypto';
 import { demo, hash, query, roomPath, session, setSessionCookie, token, validToken } from './store';
 
@@ -19,9 +20,11 @@ export async function issueInvite(room: string, maxUses = 1, minutes = 15) {
 }
 
 export async function revokeInvite(room: string, id: string) {
-  return (await query(`
+  const revoked = (await query(`
     UPDATE invitations SET revoked_at = $3 WHERE id = $1 AND room = $2 AND revoked_at IS NULL RETURNING id
   `, [id, room, Date.now()])).length > 0;
+  if (revoked && process.env.XMPP_ADMIN_URL) await reconcileXmpp(true, room).catch(() => {});
+  return revoked;
 }
 
 export async function redeemInvite(value: string, name: string) {
