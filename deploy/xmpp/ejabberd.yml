@@ -48,5 +48,6 @@ modules:
       public_list: false
       members_only: true
       allow_user_invites: false
-      allow_private_messages: false
+      allowpm: false
+      allow_private_messages_from_visitors: nobody
       mam: true
