@@ -68,24 +68,21 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       doc.head.append(style);
       const root = doc.createElement('converse-root');
       doc.body.append(root);
-      // Converse 12 adds native autofocus to its composer when rendering a room.
-      const removeAutofocus = () => {
-        for (const input of root.querySelectorAll("textarea.chat-textarea[autofocus]")) {
-          input.removeAttribute("autofocus");
-        }
-      };
-      const composerObserver = new MutationObserver(removeAutofocus);
+      // Prevent native autofocus while Converse inserts its first composer.
+      const iframe = frame.current!;
+      iframe.inert = true;
+      let releaseFrame = 0;
+      const release = () => { iframe.inert = false; };
+      const composerObserver = new MutationObserver(() => {
+        const input = root.querySelector("textarea.chat-textarea");
+        if (!input) return;
+        input.removeAttribute("autofocus");
+        if (!releaseFrame) releaseFrame = requestAnimationFrame(() => {
+          releaseFrame = requestAnimationFrame(release);
+        });
+      });
       composerObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["autofocus"] });
-      const element = doc.defaultView?.HTMLElement.prototype;
-      const focus = element?.focus;
-      const restoreFocus = () => { if (element && focus) element.focus = focus; };
-      if (element && focus) {
-        element.focus = function (options) {
-          if (!this.matches("textarea.chat-textarea")) focus.call(this, options);
-        };
-        doc.addEventListener("pointerdown", restoreFocus, { capture: true, once: true });
-        doc.addEventListener("keydown", restoreFocus, { capture: true, once: true });
-      }
+      const failOpen = window.setTimeout(release, 8000);
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -117,7 +114,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; restoreFocus(); composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; clearTimeout(failOpen); cancelAnimationFrame(releaseFrame); release(); composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
