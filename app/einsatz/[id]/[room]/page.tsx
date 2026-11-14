@@ -55,7 +55,7 @@ export default async function Workspace({ params, searchParams }: {
         <div className="eyebrow">{active.main ? 'Main room' : 'Subroom'}</div>
         <h2 className="roomTitle">{active.name}</h2>
         {!guest && !active.main && main && <RoomDestination className="back" href={roomPath(id, main.id)} name={main.name}>Back to main room</RoomDestination>}
-        <Link href={roomPath(id, room) + "/wissen"} className="iconLabel"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
+        <Link href={roomPath(id, room) + "/wissen"} className="iconLabel" target="_blank" rel="noopener noreferrer" title="Opens in a new tab"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
         <IncidentStage key={room} path={roomPath(id, room)}
