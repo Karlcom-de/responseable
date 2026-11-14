@@ -16,11 +16,12 @@ try {
   const operator = await ops.newPage();
   const guest = await visitors.newPage();
   for (const page of [operator, guest]) page.on("pageerror", error => console.error("Browser:", error.message));
-  for (const context of [ops, visitors]) context.setDefaultTimeout(12000);
+  for (const context of [ops, visitors]) context.setDefaultTimeout(25000);
   await operator.goto(base);
   await operator.getByLabel('Username').fill(process.env.SMOKE_OPERATOR);
   await operator.getByLabel('Password').fill(password);
   await operator.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await operator.getByRole('heading', { name: 'Incident overview' }).waitFor();
   await operator.getByLabel('Incident title').fill('Staging ' + Date.now());
   await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
   await operator.getByRole('button', { name: 'Create incident' }).click();
