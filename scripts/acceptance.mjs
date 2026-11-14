@@ -1,0 +1,207 @@
+import assert from 'node:assert/strict';
+import { cp } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { scryptSync } from 'node:crypto';
+import { createServer } from 'node:http';
+import { Client } from 'pg';
+import { chromium } from '@playwright/test';
+
+assert(process.env.DATABASE_URL, 'DATABASE_URL muss auf eine Testdatenbank zeigen.');
+const password = 'Nur fuer isolierten ResponseAble Test';
+const salt = '47c4d2d73a50a08bbd2dce7c24170707';
+const base = 'http://127.0.0.1:3130';
+const other = 'http://127.0.0.1:3131';
+const writes = [];
+let ready = true;
+let callStatus = 200;
+const mock = createServer(async (request, response) => {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  const body = Buffer.concat(chunks).toString();
+  writes.push([request.method, request.url, request.headers['x-android-key'], body && JSON.parse(body)]);
+  if (request.url === '/mock/call/outgoing') response.statusCode = callStatus;
+  response.setHeader('content-type', 'application/json');
+  response.end(JSON.stringify({ ok: true, result: { androidReady: ready } }));
+});
+await new Promise(resolve => mock.listen(0, '127.0.0.1', resolve));
+
+const env = {
+  ...process.env, RESPONSEABLE_MODE: 'real', RESPONSEABLE_OPERATOR: 'Testleitung',
+  RESPONSEABLE_PASSWORD_HASH: salt + ':' + scryptSync(password, salt, 64).toString('hex'),
+  RESPONSEABLE_SECURE_COOKIE: 'false',
+  ANDROID_GATEWAY_URL: `http://127.0.0.1:${mock.address().port}/mock`,
+  ANDROID_GATEWAY_KEY: 'mock-only', LIVEKIT_SIP_TRUNK_ID: '',
+};
+await cp('.next/static', '.next/standalone/.next/static', { recursive: true });
+await cp('public', '.next/standalone/public', { recursive: true });
+const children = [];
+let browser;
+try {
+  const migration = spawn(process.execPath, ['scripts/migrate.mjs'], { env, stdio: 'inherit' });
+  assert.equal(await new Promise(resolve => migration.once('exit', resolve)), 0);
+  for (const origin of [base, other]) {
+    const { port } = new URL(origin);
+    children.push(spawn(process.execPath, ['.next/standalone/server.js'], {
+      env: { ...env, PORT: port, HOSTNAME: '127.0.0.1', RESPONSEABLE_PUBLIC_ORIGIN: origin }, stdio: 'inherit',
+    }));
+    for (let attempt = 0; ; attempt++) {
+      if (await fetch(origin + '/health/ready').then(r => r.ok).catch(() => false)) break;
+      assert(attempt < 60, 'Readiness fehlgeschlagen.');
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    assert.equal((await fetch(origin + '/health/live')).status, 200);
+  }
+
+  browser = await chromium.launch({
+    executablePath: process.env.TEST_CHROMIUM,
+    args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+  });
+  const ops = await browser.newContext({ permissions: ['camera', 'microphone'] });
+  const visitors = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera', 'microphone'] });
+  const operator = await ops.newPage();
+  const guest = await visitors.newPage();
+  for (const page of [operator, guest]) page.on("pageerror", error => console.error("Browser:", error.message));
+  for (const context of [ops, visitors]) context.setDefaultTimeout(12000);
+  await operator.goto(base);
+  await operator.getByLabel('Kennung').fill('Testleitung');
+  await operator.getByLabel('Passwort').fill(password);
+  await operator.getByRole('button', { name: 'Anmelden' }).click();
+  await operator.getByLabel('Einsatzbezeichnung').fill('Abnahme ' + Date.now());
+  await operator.getByLabel('Lagebeschreibung').fill('Interne Arbeitsfläche');
+  await operator.getByRole('button', { name: 'Einsatz anlegen' }).click();
+  await operator.getByRole('heading', { name: 'Einsatzleitung' }).waitFor();
+  const main = new URL(operator.url()).pathname;
+  await operator.getByLabel('Neuer Unterraum').fill('Abschnitt Nord');
+  await operator.getByRole('button', { name: 'Raum anlegen' }).click();
+  await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
+  const room = new URL(operator.url()).pathname;
+  await operator.getByRole('button', { name: 'Gästelink erstellen' }).click();
+  const invite = await operator.getByRole('link', { name: 'Gästelink öffnen' }).getAttribute('href');
+  await guest.goto(other + invite);
+  await guest.getByLabel('Anzeigename').fill('Gast Alex');
+  await guest.getByRole('button', { name: 'Raum beitreten' }).click();
+  await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
+  assert.equal(await guest.getByRole('button', { name: 'Raum anlegen' }).count(), 0);
+  assert.equal(await guest.getByText('Interne Arbeitsfläche').count(), 0);
+  assert(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await guest.getByLabel('Nachricht').fill('Abschnitt meldet sich');
+  await guest.getByRole('button', { name: 'Senden' }).click();
+  await guest.getByText('Abschnitt meldet sich').waitFor();
+  await operator.getByText('Abschnitt meldet sich').waitFor();
+  await operator.goto(other + room);
+  await operator.getByText('Abschnitt meldet sich').waitFor();
+  await guest.goto(other + main);
+  await guest.getByRole('heading', { name: 'Seite nicht verfügbar' }).waitFor();
+  await guest.goto(other + room);
+  assert.equal((await visitors.request.get(other + main + '/board')).status(), 404);
+  assert.equal((await visitors.request.post(other + main + '/meeting', { headers: { origin: other } })).status(), 404);
+  assert.equal((await visitors.request.post(other + room + '/board', { headers: { origin: 'https://example.org' } })).status(), 403);
+
+  await Promise.all([operator, guest].map(async page => {
+    await page.getByRole('button', { name: 'Lagebild öffnen' }).click();
+    await page.locator('canvas.interactive').waitFor();
+    await page.waitForTimeout(1200);
+    await page.locator(".canvas").scrollIntoViewIfNeeded();
+  }));
+  await Promise.all([operator, guest].map(async page => {
+    const canvas = await page.locator('canvas.interactive').boundingBox();
+    await page.mouse.click(canvas.x + 70, canvas.y + 160);
+    await page.keyboard.press('r');
+    await page.mouse.move(canvas.x + 70, canvas.y + 160);
+    await page.mouse.down();
+    await page.mouse.move(canvas.x + 120, canvas.y + 200, { steps: 5 });
+    await page.mouse.up();
+  }));
+  for (let attempt = 0; ; attempt++) {
+    const board = await (await ops.request.get(base + room + '/board')).json();
+    if (board.elements.length === 2) break;
+    assert(attempt < 20, 'Zwei Zeichnungen wurden nicht gespeichert.');
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  await guest.reload();
+  const persisted = await (await visitors.request.get(other + room + '/board')).json();
+  assert.equal(persisted.elements.length, 2);
+  assert.deepEqual((await (await ops.request.get(base + main + '/board')).json()).elements, []);
+
+  if (env.LIVEKIT_URL) {
+    await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Meeting beitreten' }).click()));
+    await operator.getByRole('button', { name: 'Kamera' }).click();
+    await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2));
+    await guest.getByText('Testleitung', { exact: true }).waitFor();
+    await guest.getByRole('button', { name: 'Verlassen' }).click();
+    await operator.getByRole('button', { name: 'Verlassen' }).click();
+  }
+
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555555');
+  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  const confirm = operator.getByRole('button', { name: 'SMS senden' });
+  await confirm.waitFor();
+  await operator.route('**/einsatz/**', async route => {
+    const request = route.request();
+    if (request.method() !== 'POST') return route.continue();
+    const { pathname, search } = new URL(request.url());
+    const headers = request.headers();
+    const results = await Promise.all([base, other].map(origin => ops.request.post(origin + pathname + search, {
+      data: request.postDataBuffer(),
+      headers: { origin, 'content-type': headers['content-type'], 'next-action': headers['next-action'] },
+    })));
+    assert(results.every(result => result.ok()), results.map(result => result.status()).join(', '));
+    await route.fulfill({ response: results[1] });
+  });
+  await confirm.click();
+  await operator.getByText(/SMS.*Angenommen/).waitFor();
+  await operator.unroute('**/einsatz/**');
+  assert.deepEqual(writes.map(([method, path, key]) => [method, path, key]), [
+    ['GET', '/mock/health', 'mock-only'], ['POST', '/mock/sms/send', 'mock-only'],
+  ]);
+  assert.equal(writes[1][3].number, '+491555555555');
+  assert.match(writes[1][3].text, /Abschnitt Nord\nEinladung: http:\/\/127\.0\.0\.1:3131\/einladung\//);
+  await operator.goto(base + room);
+  await operator.getByText(/SMS.*Angenommen/).waitFor();
+  ready = false;
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555555');
+  await operator.getByLabel('Aktion').selectOption('android');
+  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  await operator.getByRole('button', { name: 'Anruf auslösen' }).click();
+  await operator.getByText(/Über Android anrufen.*Abgelehnt/).waitFor();
+  assert.equal(writes.at(-1)[1], '/mock/health');
+  assert.equal(writes.length, 3);
+
+  ready = true;
+  for (const [status, label] of [[200, 'Angenommen'], [503, 'Unklar']]) {
+    callStatus = status;
+    await operator.getByLabel('Internationale Rufnummer').fill('+491555555556');
+    await operator.getByLabel('Aktion').selectOption('android');
+    await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+    await operator.getByRole('button', { name: 'Anruf auslösen' }).click();
+    await operator.getByText('Über Android anrufen · +491555555556 · ' + label, { exact: true }).waitFor();
+    assert.deepEqual(writes.slice(-2), [
+      ['GET', '/mock/health', 'mock-only', ''],
+      ['POST', '/mock/call/outgoing', 'mock-only', { number: '+491555555556' }],
+    ]);
+  }
+  assert.equal(writes.length, 7);
+  const database = new Client({ connectionString: env.DATABASE_URL });
+  await database.connect();
+  try {
+    await database.query('UPDATE invitations SET expires = 0 WHERE room = $1', [room.split('/').at(-1)]);
+  } finally {
+    await database.end();
+  }
+  await guest.goto(other + invite);
+  await guest.getByRole('heading', { name: 'Seite nicht verfügbar' }).waitFor();
+  await operator.goto(base + room);
+  const beforeStop = await (await ops.request.get(base + room + '/board')).json();
+  const stopped = new Promise(resolve => children[0].once('exit', resolve));
+  children[0].kill('SIGKILL');
+  await stopped;
+  await assert.rejects(fetch(base + '/health/live'));
+  await operator.goto(other + room);
+  await operator.getByText('Abschnitt meldet sich').waitFor();
+  assert.deepEqual(await (await ops.request.get(other + room + '/board')).json(), beforeStop);
+  console.log('OK: zwei App-Prozesse, Login, Gasteinladung, Chat, Board, Zugriffssperren und Mock-Idempotenz und Ausfall einer Web-Instanz' + (env.LIVEKIT_URL ? ', LiveKit-Remotevideo' : ''));
+} finally {
+  await browser?.close();
+  for (const child of children) child.kill();
+  mock.close();
+}

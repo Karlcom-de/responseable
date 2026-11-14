@@ -1,0 +1,40 @@
+fullnameOverride: valkey
+auth:
+  enabled: true
+  usersExistingSecret: responseable-valkey
+  aclUsers:
+    default:
+      permissions: "~* &* +@all"
+replica:
+  enabled: true
+  replicas: 3
+persistence:
+  enabled: true
+  size: 2Gi
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: valkey
+            app.kubernetes.io/instance: valkey
+podDisruptionBudget:
+  enabled: true
+sentinel:
+  enabled: true
+  masterSet: livekit
+  quorum: 2
+  replicas: 3
+  existingSecret: responseable-valkey
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: sentinel
+              app.kubernetes.io/instance: valkey

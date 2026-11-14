@@ -1,0 +1,113 @@
+:root{color-scheme:dark;--bg:#0d151d;--panel:#151f29;--line:#364755;--text:#edf4f7;--muted:#a6b6c4;--accent:#85e5cc;--selected:#203b3d;font-family:"Instrument Sans",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text)}
+a{color:var(--accent);text-underline-offset:.2em}
+button,input,textarea{font:inherit}
+button{border:1px solid transparent;border-radius:7px;padding:.65rem .95rem;background:var(--accent);color:#102b29;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.12)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+input,textarea{display:block;width:100%;margin-top:.4rem;padding:.65rem;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text)}
+textarea{resize:vertical}
+label{font-size:.88rem;font-weight:600}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.045em;overflow-wrap:anywhere}
+h2{font-size:1.05rem}
+h3{font-size:.9rem}
+p{line-height:1.55}
+.top{min-height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem clamp(1rem,4vw,3rem);background:var(--panel)}
+.brand,.identity{display:flex;align-items:center;gap:.65rem}
+.brand{color:var(--text);font-weight:750;text-decoration:none}
+.identity{flex-wrap:wrap;justify-content:flex-end;font-size:.85rem;overflow-wrap:anywhere}
+.mark{display:block;flex:none}
+.badge,.count{border:1px solid var(--line);color:var(--muted);border-radius:5px;font-size:.75rem;padding:.2rem .4rem}
+.quiet,.secondary{background:var(--panel);border-color:var(--line);color:var(--text)}
+.eyebrow{color:var(--accent);font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;font-weight:750;margin-bottom:.45rem}
+.muted{color:var(--muted)}
+.entry,.overview,.workspace{margin-inline:auto;padding:clamp(1rem,4vw,3rem)}
+.entry{max-width:510px;margin-top:clamp(1rem,8vh,5rem)}
+.entry > p{margin:.75rem 0 1.2rem}
+.entry form{margin-top:1.2rem}
+.overview,.workspace{max-width:1536px}
+.overviewGrid,.workspaceGrid{display:grid;gap:1rem;margin-top:1.4rem;align-items:start}
+.overviewGrid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.workspaceGrid{grid-template-columns:minmax(175px,.7fr) minmax(0,1.65fr) minmax(260px,1fr)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:1rem;min-width:0}
+.panel > h2{margin-bottom:.9rem}
+.stack{display:grid;gap:1rem;justify-items:start}
+.stack label{width:100%}
+.notice{color:#ffd194}
+.listing,nav ul{list-style:none;margin:0;padding:0}
+.listing a,nav a{display:flex;gap:.5rem;padding:.7rem;border-radius:6px;text-decoration:none;color:var(--text);overflow-wrap:anywhere}
+.listing a{flex-direction:column;border-top:1px solid var(--line)}
+.listing a span{color:var(--muted);font-size:.88rem}
+nav a[aria-current],nav a:hover,.listing a:hover{background:var(--selected)}
+nav a span{color:var(--accent)}
+.roomForm,.invites{margin-top:1rem;border-top:1px solid var(--line);padding-top:1rem}
+.back{display:inline-block;margin-bottom:1rem;font-size:.87rem}
+.roomTitle{font-size:1.55rem;overflow-wrap:anywhere}
+.description,.messages article p{white-space:pre-wrap;overflow-wrap:anywhere}
+.description{margin-top:.4rem;color:var(--muted)}
+.inviteResult{margin-top:.8rem;font-size:.85rem}
+.messages{height:clamp(180px,42vh,500px);overflow:auto;padding:.5rem;display:flex;flex-direction:column-reverse;border:1px solid var(--line);border-radius:7px}
+.messages article,.messages > p{padding:.55rem;flex-shrink:0}
+.messages article + article{border-bottom:1px solid var(--line)}
+.messageMeta{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap;font-size:.8rem;overflow-wrap:anywhere}
+.messageMeta time,.messageMeta span{color:var(--muted)}
+.composer{margin-top:.8rem}
+@media(max-width:900px){.workspaceGrid{grid-template-columns:minmax(150px,.65fr) minmax(0,1.5fr)}.chat{grid-column:2}.rooms{grid-row:span 2}}
+@media(max-width:580px){.overviewGrid,.workspaceGrid{grid-template-columns:minmax(0,1fr)}.chat,.rooms{grid-column:auto;grid-row:auto}.top{align-items:flex-start}}
+.media{height:340px;min-width:0}
+.roomForm > h3{margin-bottom:.6rem}
+.mediaGrid{height:270px}
+.mediaControls{display:flex;gap:.35rem;flex-wrap:wrap}
+.media{height:auto}
+
+.canvas{height:450px;margin-top:.7rem}
+select{display:block;width:100%;margin-top:.4rem;padding:.65rem;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit}
+.inviteResult form{margin-top:.6rem}
+.attempts{padding-left:1.15rem;color:var(--muted);font-size:.85rem}
+
+.loginEntry {
+  max-width: 1050px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 0;
+}
+.loginContent {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px 0 0 16px;
+  padding: clamp(1.4rem, 4vw, 3rem);
+}
+.loginContent > p { margin: .75rem 0 1.2rem; }
+.loginContent button { width: 100%; }
+.loginArtwork {
+  min-height: 22rem;
+  border: 1px solid var(--line);
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  background:
+    url('/icon.svg') center / 88px no-repeat,
+    radial-gradient(circle at center, #28564f, transparent 68%),
+    repeating-linear-gradient(0deg, transparent 0 31px, #36475566 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, #36475566 31px 32px),
+    var(--bg);
+}
+.incident { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.workspaceShortcuts { display: none; }
+.rooms nav a[aria-current] { box-shadow: inset 3px 0 var(--accent); }
+.chat { position: sticky; top: 1rem; }
+.composer button { justify-self: end; }
+@media (max-width: 900px) {
+  .chat { position: static; }
+}
+@media (max-width: 580px) {
+  .loginEntry { grid-template-columns: minmax(0, 1fr); }
+  .loginContent { border-radius: 16px; }
+  .loginArtwork { display: none; }
+  .workspaceShortcuts { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+  .workspaceShortcuts a { background: var(--panel); border: 1px solid var(--line); }
+  .workspaceGrid { margin-top: .75rem; }
+  .canvas { height: min(450px, 65dvh); }
+  .top { flex-wrap: wrap; align-items: center; }
+}

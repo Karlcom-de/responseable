@@ -1,0 +1,41 @@
+app:
+  enabled: true
+  image: ""
+  imagePullSecrets: []
+  secret: responseable-runtime
+  publicOrigin: ""
+  liveKitUrl: ""
+  replicas: 2
+  maxReplicas: 6
+  # Set to false on clusters without a resource Metrics API.
+  autoscale: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+  ingress:
+    enabled: false
+    className: traefik
+    tlsSecret: ""
+media:
+  enabled: false
+  image: livekit/livekit-server:v1.13.11
+  replicas: 2
+  # config.yaml contains API keys, Redis authentication and TURN configuration.
+  configSecret: responseable-livekit
+  turnTlsSecret: ""
+  nodeSelector:
+    responseable.io/media: "true"
+  resources:
+    requests:
+      cpu: "2"
+      memory: 1Gi
+    limits:
+      memory: 4Gi
+  ingress:
+    enabled: false
+    className: traefik
+    host: ""
+    tlsSecret: ""

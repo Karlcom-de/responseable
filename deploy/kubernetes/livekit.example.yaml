@@ -1,0 +1,25 @@
+# Store the edited file as the config.yaml key of the responseable-livekit Secret.
+port: 7880
+log_level: info
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  use_external_ip: true
+redis:
+  sentinel_master_name: livekit
+  sentinel_addresses:
+    - valkey-sentinel:26379
+  sentinel_password: SET_FROM_SECRET_STORE
+  password: SET_FROM_SECRET_STORE
+keys:
+  REPLACE_API_KEY: SET_FROM_SECRET_STORE
+# Enable TURN after configuring public DNS and a reachable L4 endpoint.
+# The L4 endpoint forwards 443/TCP to 5349/TCP and 3478/UDP to 3478/UDP.
+# Mount the certificate via media.turnTlsSecret and set its DNS name below.
+# turn:
+#   enabled: true
+#   domain: turn.example.org
+#   tls_port: 5349
+#   udp_port: 3478
+#   cert_file: /etc/turn/tls.crt
+#   key_file: /etc/turn/tls.key

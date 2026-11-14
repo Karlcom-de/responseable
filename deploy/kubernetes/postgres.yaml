@@ -1,0 +1,28 @@
+# Requires the CloudNativePG operator and three schedulable nodes.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: responseable-pg
+spec:
+  instances: 3
+  bootstrap:
+    initdb:
+      database: responseable
+      owner: responseable
+  postgresql:
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: required
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  storage:
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
