@@ -1,16 +1,19 @@
 'use client';
 
-import { DisconnectButton, GridLayout, LiveKitRoom, ParticipantTile, RoomAudioRenderer, StartAudio, TrackToggle, useTracks } from '@livekit/components-react';
+import { DisconnectButton, FocusLayout, GridLayout, LiveKitRoom, ParticipantTile, RoomAudioRenderer, StartAudio, TrackToggle, useConnectionState, useTracks } from '@livekit/components-react';
 import { useState } from 'react';
-import { Track } from 'livekit-client';
+import { ConnectionState, Track } from 'livekit-client';
 import '@livekit/components-styles';
 
 function Conference() {
   const [error, setError] = useState('');
+  const connection = useConnectionState();
   const tracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }, { source: Track.Source.ScreenShare, withPlaceholder: false }]);
+  const share = tracks.find(track => track.source === Track.Source.ScreenShare);
   return <>
-    <div className="mediaGrid"><GridLayout tracks={tracks}><ParticipantTile /></GridLayout></div>
+    <div className="mediaGrid">{share ? <FocusLayout trackRef={share} /> : <GridLayout tracks={tracks}><ParticipantTile /></GridLayout>}</div>
     <RoomAudioRenderer />
+    <p className="muted" role="status">{connection === ConnectionState.Reconnecting ? "Reconnecting to meeting…" : connection === ConnectionState.Connected ? "Meeting connected" : "Connecting to meeting…"}</p>
     <StartAudio label="Enable meeting audio" />
     {error && <p role="alert">{error}</p>}
     <div className="mediaControls">

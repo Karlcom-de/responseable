@@ -176,3 +176,12 @@ nav a span{color:var(--accent)}
 
 .whiteboardPage { margin-inline: auto; padding: 1rem clamp(1rem, 4vw, 3rem); }
 .whiteboardPage .canvas { height: max(360px, calc(100dvh - 13rem)); }
+
+.incidentStage { display: grid; gap: .75rem; }
+.incidentStage[data-view="board"] .mediaGrid { display: none; }
+.converseFrame { width: 100%; height: clamp(360px, 65dvh, 800px); border: 1px solid var(--line); border-radius: .5rem; }
+@media (max-width: 580px) {
+  .workspaceShortcuts { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
+  .workspaceGrid > [id] { scroll-margin-top: 4rem; }
+  .converseFrame { height: max(280px, 65dvh); }
+}

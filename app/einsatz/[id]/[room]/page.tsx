@@ -8,7 +8,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { query as sql, roomInIncident, roomPath, session, type Incident, type Room } from '../../../../lib/store';
 import { createRoom } from '../../../actions';
-import RoomChat from '../../../room-chat';
+import WorkspaceChat from '@/app/workspace-chat';
+import IncidentStage from '@/app/incident-stage';
 import Notifications from "../../../notifications";
 import Board from "../../../board";
 import Meeting from "../../../meeting";
@@ -28,6 +29,7 @@ export default async function Workspace({ params, searchParams }: {
   if (!active) notFound();
   const incident = (await sql<Incident>('SELECT id, title, summary FROM incidents WHERE id = $1', [id]))[0];
   const rooms = guest ? [active] : await sql<Room>('SELECT id, name, main FROM rooms WHERE incident = $1 ORDER BY main DESC, name, id', [id]);
+  const main = rooms.find(item => item.main);
   return <><Header name={current.name} guest={guest} /><main className="workspace">
     <section className="incident">
       {!guest && <Link className="back" href="/">← Incident overview</Link>}
@@ -52,14 +54,14 @@ export default async function Workspace({ params, searchParams }: {
       <Card className="panel situation" id="situation" role="region">
         <div className="eyebrow">{active.main ? 'Main room' : 'Subroom'}</div>
         <h2 className="roomTitle">{active.name}</h2>
+        {!guest && !active.main && main && <Link className="back" href={roomPath(id, main.id)}>Back to main room</Link>}
         <Link href={roomPath(id, room) + "/wissen"} className="iconLabel"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
-        <Board key={"board-" + room} path={roomPath(id, room)} />
-        <Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />
+        <IncidentStage key={room} board={<Board key={"board-" + room} path={roomPath(id, room)} />} meeting={<Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
-      <RoomChat key={room} path={roomPath(id, room)} />
+      <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo} />
     </div>
   </main></>;
 }
