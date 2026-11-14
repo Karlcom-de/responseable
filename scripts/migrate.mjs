@@ -25,6 +25,14 @@ try {
     INSERT INTO responseable_schema VALUES (3) ON CONFLICT DO NOTHING;
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS provider text;
     INSERT INTO responseable_schema VALUES (4) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS documents (
+      id text PRIMARY KEY, room text NOT NULL REFERENCES rooms(id), slug text NOT NULL,
+      kind text NOT NULL CHECK (kind IN ('wiki', 'playbook')), title text NOT NULL, body text NOT NULL,
+      visibility text NOT NULL CHECK (visibility IN ('private', 'room')),
+      revision integer NOT NULL DEFAULT 1, updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (room, slug)
+    );
+    INSERT INTO responseable_schema VALUES (5) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);

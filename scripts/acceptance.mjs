@@ -108,6 +108,29 @@ try {
   assert.equal((await visitors.request.post(other + main + '/meeting', { headers: { origin: other } })).status(), 404);
   assert.equal((await visitors.request.post(other + room + '/board', { headers: { origin: 'https://example.org' } })).status(), 403);
 
+  const documents = other + room + '/documents';
+  const documentHeaders = { origin: other };
+  const privateDraft = { slug: 'intern', kind: 'playbook', title: 'Interner Ablauf', body: '# Intern', visibility: 'private' };
+  const publishedDraft = { slug: 'lagebild', kind: 'wiki', title: 'Lagebild', body: '# Lage', visibility: 'room' };
+  for (const data of [privateDraft, publishedDraft]) {
+    assert.equal((await ops.request.post(documents, { data, headers: documentHeaders })).status(), 201);
+  }
+  assert.equal((await ops.request.post(documents, { data: publishedDraft, headers: documentHeaders })).status(), 409);
+  assert.equal((await browser.newContext().then(context => context.request.get(documents))).status(), 404);
+  assert.equal((await visitors.request.get(other + main + '/documents')).status(), 404);
+  assert.equal((await visitors.request.get(documents + '/intern')).status(), 404);
+  assert.equal((await visitors.request.post(documents, { data: publishedDraft, headers: documentHeaders })).status(), 404);
+  const guestDocs = await (await visitors.request.get(documents)).json();
+  assert.equal(guestDocs.canEdit, false);
+  assert.deepEqual(guestDocs.documents.map(doc => doc.slug), ['lagebild']);
+  assert(!Object.hasOwn(guestDocs.documents[0], 'body'));
+  const edit = { ...publishedDraft, body: '# Aktualisiert', revision: 1 };
+  assert.equal((await ops.request.patch(documents + '/lagebild', { data: edit, headers: documentHeaders })).status(), 200);
+  assert.equal((await ops.request.patch(documents + '/lagebild', { data: edit, headers: documentHeaders })).status(), 409);
+  const edition = await (await visitors.request.get(documents + '/lagebild')).json();
+  assert.equal(edition.document.body, edit.body);
+  assert.equal(edition.document.revision, 2);
+
   await Promise.all([operator, guest].map(async page => {
     await page.getByRole('button', { name: 'Lagebild öffnen' }).click();
     await page.locator('canvas.interactive').waitFor();
