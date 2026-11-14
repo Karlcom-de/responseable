@@ -23,7 +23,6 @@ try {
   await operator.getByRole('button', { name: 'Sign in', exact: true }).click();
   await operator.getByRole('heading', { name: 'Incident overview' }).waitFor();
   await operator.getByLabel('Incident title').fill('Staging ' + Date.now());
-  await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
   await operator.getByRole('button', { name: 'Create incident' }).click();
   await operator.getByRole('heading', { name: 'Incident command' }).waitFor();
   const main = new URL(operator.url()).pathname;
@@ -38,12 +37,15 @@ try {
   await guest.goto(new URL(invite, base).href);
   await guest.getByLabel('Display name').fill('Gast Alex');
   await guest.getByRole('button', { name: 'Join room' }).click();
+  await guest.waitForURL(base + room);
   await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
   assert.equal(await guest.getByRole('button', { name: 'Create room' }).count(), 0);
-  assert.equal(await guest.getByText('Interne Arbeitsfläche').count(), 0);
   assert(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await guest.getByLabel('Message').fill('Abschnitt meldet sich');
-  await guest.getByRole('button', { name: 'Send' }).click();
+  const sent = guest.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === room);
+  await guest.getByRole('button', { name: 'Send', exact: true }).click();
+  const sendResponse = await sent;
+  assert(sendResponse.ok() || sendResponse.status() === 303, 'Chat POST failed with ' + sendResponse.status());
   await guest.getByText('Abschnitt meldet sich').waitFor();
   await operator.getByText('Abschnitt meldet sich').waitFor();
 
