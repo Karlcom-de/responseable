@@ -4,6 +4,11 @@ auth_method: [jwt, internal]
 jwt_auth_only_rule: jwt_only
 oauth_access: provisioner
 jwt_key: /run/xmpp/jwt.jwk
+sql_type: pgsql
+sql_server: xmpp-archive
+sql_database: xmpp
+sql_username: xmpp
+sql_password: ARCHIVE_PASSWORD
 certfiles: [/run/xmpp/tls.pem]
 listen:
   - port: 5443
@@ -40,8 +45,10 @@ api_permissions:
     what: [set_room_affiliation]
 modules:
   mod_http_api: {}
+  mod_disco: {}
   mod_muc_admin: {}
   mod_mam:
+    db_type: sql
     default: never
   mod_muc:
     host: muc.chat.example.test

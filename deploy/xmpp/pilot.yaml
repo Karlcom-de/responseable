@@ -28,6 +28,13 @@ spec:
       containers:
         - name: ejabberd
           image: ghcr.io/processone/ejabberd:25.10
+          env:
+            - name: EJABBERD_MACRO_ARCHIVE_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: xmpp-archive-db, key: POSTGRES_PASSWORD}
+          lifecycle:
+            preStop:
+              exec: {command: [ejabberdctl, stop]}
           ports:
             - {name: websocket, containerPort: 5443}
             - {name: admin, containerPort: 5444}
@@ -62,7 +69,7 @@ spec:
   ingress:
     - from:
         - podSelector:
-            matchLabels: {app: responseable-xmpp-pilot}
+            matchLabels: {app-role: xmpp-bootstrap}
       ports:
         - {port: 5443, protocol: TCP}
         - {port: 5444, protocol: TCP}

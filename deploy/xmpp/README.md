@@ -7,3 +7,5 @@ Use a dedicated real-mode ResponseAble database and synthetic accounts. Create t
 Keep XMPP_PILOT_ENABLED off until a provisioned room is mapped in xmpp_rooms and the reconciliation endpoint is called periodically. An expired JWT prevents new authorization but does not itself terminate a connection. Test the outcast transition with open clients, reconnect and MAM before enabling a room for real participants. MAM content is readable by the server.
 
 This single replica with a local-path PVC is a pilot, not HA. Verify restart and restore before using it for any durable records.
+
+The pilot uses PostgreSQL only for MAM. Before starting ejabberd, apply archive.yaml with an xmpp-archive-db Secret and initialize the empty database using the pinned ejabberd 25.10 sql/pg.sql (SHA-256 f427948e095ef07c1a7bcd5873e4478d4c40e3897a59172a3bcc0ff5be422754). The ejabberd PVC still holds room metadata and OAuth state. Retain and back up both volumes. This setup does not migrate pre-existing Mnesia archives. After an ejabberd restart, verify the admin bootstrap; if the existing OAuth token is invalid, issue a replacement on the running node, rotate the app Secret and verify again.
