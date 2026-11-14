@@ -54,7 +54,7 @@ docker buildx build --platform "$TARGET_PLATFORM" \
 
 `TARGET_PLATFORM` ist die Architektur deiner Worker, etwa `linux/amd64` oder `linux/arm64`. `IMAGE_TAG` benennt das freigegebene Registry-Repository samt Release-Tag. `IMAGE` für Helm ist danach dieses Repository mit dem veröffentlichten Digest.
 
-Die Befehle verwenden Helm 4. Bei Helm 3 `--atomic` anstelle von `--rollback-on-failure` verwenden. Der Helm-Hook führt die Migration vor dem Upgrade aus. Bei einem Fehler zuerst die Job-Logs lesen. Ein App-Rollback setzt die Datenbank nicht zurück. Additive Migrationen ermöglichen einen gemischten Versionsstand während des Rollouts.
+Die Befehle verwenden Helm 4. Bei Helm 3 `--atomic` anstelle von `--rollback-on-failure` verwenden. Der Helm-Hook führt die Migration vor dem Upgrade aus. Bei einem Fehler zuerst die Job-Logs lesen. Ein App-Rollback setzt die Datenbank nicht zurück. Beim Wechsel auf individuelle Konten muss der Ingress geschlossen bleiben, bis alle alten App-Replikate beendet sind.
 
 Für internes LiveKit erst die Medien-Nodes über das etablierte Node-Management mit `responseable.io/media=true` kennzeichnen. Lege im Namespace das Secret `responseable-valkey` mit getrennten Kennwörtern unter `default` und `sentinel` an. Installiere das Upstream-Chart mit den mitgelieferten HA-Werten.
 

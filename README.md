@@ -46,7 +46,7 @@ npm run dev -- --hostname 127.0.0.1
 
 Open `http://localhost:3000` and select **Run the exercise** on the welcome page. The example uses a dedicated local database and simulated incident data. Demo mode disables external media and phone operations. If you already have PostgreSQL, skip Compose and put your empty database's connection string in `DATABASE_URL`.
 
-For a real instance, follow the [Kubernetes production installation](docs/kubernetes.md#production-installation). It sets up persistent PostgreSQL, HTTPS, per-account MFA and the first administrator. Keep the exercise database separate.
+For a real instance, follow the [Kubernetes production installation](docs/kubernetes.md#production-installation). It sets up persistent PostgreSQL, HTTPS, per-account MFA and the first administrator. Keep the exercise database separate. See the [production readiness report](docs/production-readiness.md) for verified and pending release gates.
 
 ## Integrations
 

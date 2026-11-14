@@ -1,6 +1,6 @@
 # Architecture
 
-ResponseAble is a German-language coordination workspace for incident response and business continuity. An operator creates an incident with a main room, opens workstream rooms, and invites participants into the appropriate room.
+ResponseAble is a coordination workspace for incident response and business continuity. An operator creates an incident with a main room, opens workstream rooms, and invites participants into the appropriate room.
 
 | Function | Component |
 | --- | --- |
@@ -10,7 +10,7 @@ ResponseAble is a German-language coordination workspace for incident response a
 | Whiteboard | Excalidraw with per-element versioning and transactional per-room merge |
 | SMS and voice | Independently configured Android, authenticated webhook, or AWS End User Messaging providers. LiveKit SIP handles dial-in to a room. |
 
-The default real-mode deployment uses one configured operator identity. Guests redeem a time-limited link for one room. The server checks that grant for chat, board and media access. App and gateway credentials stay server-side. The application can serve multiple replicas from the same release image and database.
+The production Helm deployment uses individual accounts with MFA and fixed roles. Coordinators and responders are limited to assigned incidents. Guests redeem a time-limited link for one room. The server checks that grant for chat, board and media access. App and gateway credentials stay server-side. The application can serve multiple replicas from the same release image and database.
 
 Chat and boards do not depend on LiveKit. SMS and voice alerts can continue during a media-server outage while the app can reach their selected providers. A sent link requires an accessible app origin. Each meeting has one active media node. Users may need to rejoin if that node fails. A single phone and network remain individual failure domains.
 
