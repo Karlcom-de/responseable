@@ -86,6 +86,32 @@ try {
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS submission uuid;
     CREATE UNIQUE INDEX IF NOT EXISTS message_submission ON messages(room, submission);
     INSERT INTO responseable_schema VALUES (11) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS accounts (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      login text NOT NULL UNIQUE,
+      display_name text NOT NULL,
+      password_hash text NOT NULL,
+      role text NOT NULL CHECK (role IN ('admin', 'coordinator', 'responder')),
+      active boolean NOT NULL DEFAULT true,
+      credential_generation integer NOT NULL DEFAULT 0,
+      require_password_change boolean NOT NULL DEFAULT false
+    );
+    CREATE TABLE IF NOT EXISTS incident_accounts (
+      account_id uuid NOT NULL REFERENCES accounts(id),
+      incident_id text NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+      PRIMARY KEY (account_id, incident_id)
+    );
+    CREATE TABLE IF NOT EXISTS account_audit (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      occurred_at timestamptz NOT NULL DEFAULT now(),
+      actor_id uuid REFERENCES accounts(id),
+      subject_id uuid NOT NULL REFERENCES accounts(id),
+      action text NOT NULL
+    );
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS account_id uuid REFERENCES accounts(id);
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS credential_generation integer;
+    CREATE INDEX IF NOT EXISTS sessions_account_id ON sessions(account_id);
+    INSERT INTO responseable_schema VALUES (12) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);
