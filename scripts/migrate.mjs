@@ -83,6 +83,9 @@ try {
     CREATE TABLE IF NOT EXISTS xmpp_rooms (room text PRIMARY KEY REFERENCES rooms(id), muc text UNIQUE NOT NULL);
     CREATE TABLE IF NOT EXISTS xmpp_grants (room text NOT NULL REFERENCES xmpp_rooms(room), session_hash text NOT NULL, jid text NOT NULL, PRIMARY KEY(room,session_hash));
     INSERT INTO responseable_schema VALUES (10) ON CONFLICT DO NOTHING;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS submission uuid;
+    CREATE UNIQUE INDEX IF NOT EXISTS message_submission ON messages(room, submission);
+    INSERT INTO responseable_schema VALUES (11) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);

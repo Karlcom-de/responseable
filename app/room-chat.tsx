@@ -40,7 +40,7 @@ export default function RoomChat({ path }: { path: string }) {
     setSending(true);
     setError('');
     try {
-      const response = await fetch(path + '/chat', { method: 'POST', body: draft });
+      const response = await fetch(path + '/chat', { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: draft });
       if (!response.ok) throw Error();
       setDraft(current => current === draft ? '' : current);
       await refresh();

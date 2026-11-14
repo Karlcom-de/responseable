@@ -31,7 +31,9 @@ export async function POST(request: Request, { params }: Context) {
   }
   text += decoder.decode();
   if (text.length > 2000 || !text.trim() || text.includes('\0')) return new Response(null, { status: 400 });
-  await query('INSERT INTO messages(room, name, guest, body, created) VALUES ($1, $2, $3, $4, $5)',
-    [room, current.name, Number(current.room !== null), text.trim(), Date.now()]);
+  const key = request.headers.get('idempotency-key');
+  if (!key || !/^[a-f0-9-]{36}$/.test(key)) return new Response(null, { status: 400 });
+  await query('INSERT INTO messages(room, name, guest, body, created, submission) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (room, submission) DO NOTHING',
+    [room, current.name, Number(current.room !== null), text.trim(), Date.now(), key]);
   return new Response(null, { status: 204 });
 }

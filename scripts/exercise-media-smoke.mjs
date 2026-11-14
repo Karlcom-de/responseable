@@ -4,7 +4,7 @@ import { chromium } from '@playwright/test';
 const origin = 'http://127.0.0.1:3190';
 const browser = await chromium.launch({
   executablePath: process.env.TEST_CHROMIUM,
-  args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+  args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--auto-select-desktop-capture-source=Entire screen', '--enable-usermedia-screen-capturing'],
 });
 try {
   const operator = await browser.newPage({ permissions: ['camera', 'microphone'] });
@@ -25,6 +25,25 @@ try {
   await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2), null, { timeout: 20000 });
   await guest.waitForFunction(() => [...document.querySelectorAll('audio')].some(audio =>
     audio.srcObject instanceof MediaStream && audio.srcObject.getAudioTracks().some(track => !track.muted)), null, { timeout: 10000 });
+  await operator.getByRole("button", { name: "Share screen", exact: true }).click();
+  await guest.waitForFunction(() => [...document.querySelectorAll("[data-lk-source=screen_share] video")].some(video => video.videoWidth > 0 && video.readyState >= 2));
+  for (const [sender, recipient, label] of [[operator, guest, "Operator"], [guest, operator, "Guest"]]) {
+    const text = label + " in call " + Date.now();
+    await sender.getByLabel("Message", { exact: true }).fill(text);
+    await sender.getByRole("button", { name: "Send", exact: true }).click();
+    await recipient.getByRole("log").getByText(text, { exact: true }).waitFor();
+  }
+  await operator.getByRole("button", { name: "Whiteboard view" }).click();
+  const popup = operator.waitForEvent("popup");
+  await operator.getByRole("link", { name: /Full-page whiteboard/ }).click();
+  const board = await popup;
+  await board.locator("canvas.interactive").waitFor();
+  await operator.getByRole("button", { name: "Leave meeting" }).waitFor();
+  await guest.waitForFunction(() => [...document.querySelectorAll("[data-lk-source=screen_share] video")].some(video => video.videoWidth > 0 && video.readyState >= 2));
+  await board.close();
+  await operator.getByRole("button", { name: "People" }).click();
+  await operator.getByRole("button", { name: "Share screen", exact: true }).click();
+  await guest.waitForFunction(() => !document.querySelector("[data-lk-source=screen_share] video"));
   assert((await fetch(origin + '/health/ready')).ok);
-  console.log('Kubernetes exercise delivered remote camera and microphone.');
+  console.log('Kubernetes exercise delivered remote camera, microphone, native screen sharing, two-way chat and whiteboard continuity.');
 } finally { await browser.close(); }
