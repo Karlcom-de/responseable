@@ -4,6 +4,8 @@ import { accountsEnabled, demo, session } from '@/lib/store';
 import { Header } from '../shell';
 import { AccountList } from './account-list';
 
+export const dynamic = "force-dynamic";
+
 export default async function Accounts() {
   if (demo || !accountsEnabled()) notFound();
   const current = await session();
