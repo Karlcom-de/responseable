@@ -40,7 +40,7 @@ async function change(request: Request, context: Context) {
   if (update && ((data.role !== undefined && !role(data.role)) || (data.active !== undefined && typeof data.active !== 'boolean') ||
     (data.password !== undefined && !password(data.password)) || (data.role === undefined && data.active === undefined && data.password === undefined))) return invalid();
 
-  const hash = data.password ? encoded(data.password) : null;
+  const hash = (create || update) && password(data.password) ? encoded(data.password) : null;
   const connection = await db().connect();
   try {
     await connection.query('BEGIN');
@@ -60,7 +60,7 @@ async function change(request: Request, context: Context) {
       subject = rows[0].id;
       action = 'create';
     } else {
-      const { rows: [target] } = await connection.query('SELECT role,active FROM accounts WHERE id=$1', [id]);
+      const { rows: [target] } = await connection.query('SELECT role,active,require_password_change FROM accounts WHERE id=$1', [id]);
       if (!target) return missing();
       if (assign) {
         await connection.query('DELETE FROM incident_accounts WHERE account_id=$1', [id]);
@@ -68,9 +68,9 @@ async function change(request: Request, context: Context) {
         action = 'assign_incidents';
       } else {
         const removesAdmin = target.active && target.role === 'admin' &&
-          (data.active === false || (data.role && data.role !== 'admin'));
+          (data.active === false || (data.role && data.role !== 'admin') || hash !== null);
         if (removesAdmin && !(await connection.query(
-          "SELECT 1 FROM accounts WHERE active AND role='admin' AND id<>$1 LIMIT 1", [id],
+          "SELECT 1 FROM accounts a WHERE active AND role='admin' AND id<>$1 AND NOT require_password_change AND EXISTS (SELECT 1 FROM operator_mfa WHERE operator=a.id::text) LIMIT 1", [id],
         )).rowCount) return new Response(null, { status: 409 });
         await connection.query(`
           UPDATE accounts SET role=COALESCE($2,role),active=COALESCE($3,active),password_hash=COALESCE($4,password_hash),

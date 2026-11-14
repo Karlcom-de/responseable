@@ -107,12 +107,12 @@ export async function prepareNotification(incident: string, room: string, form: 
       WITH invite AS (INSERT INTO invitations (hash, room, expires) VALUES ($1, $2, $3) RETURNING hash)
       INSERT INTO notifications (id, room, operator, number, method, status, created, body, invite_hash, provider)
       SELECT $4, $2, $5, $6, 'sms', 'draft', $7, $8, hash, $9 FROM invite
-    `, [hash(linkToken), room, 0, id, current.name, number, now, body, provider]);
+    `, [hash(linkToken), room, 0, id, current.accountId ?? current.name, number, now, body, provider]);
   } else {
     await query(`
       INSERT INTO notifications (id, room, operator, number, method, status, created, body, provider)
       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8)
-    `, [id, room, current.name, number, method, now, speech, provider]);
+    `, [id, room, current.accountId ?? current.name, number, method, now, speech, provider]);
   }
   redirect(path + '?vorschau=' + id);
 }
@@ -133,7 +133,7 @@ export async function confirmNotification(incident: string, room: string, id: st
       UPDATE invitations SET expires = $7 FROM claimed WHERE invitations.hash = claimed.invite_hash
     )
     SELECT number, method, body, provider FROM claimed
-  `, [id, room, current.name, now - 900_000, now, JSON.stringify(available), now + 900_000]);
+  `, [id, room, current.accountId ?? current.name, now - 900_000, now, JSON.stringify(available), now + 900_000]);
   if (claimed) {
     const body = claimed.method === 'sms' && !claimed.body.includes('/einladung/')
       ? claimed.body + '\nInvitation: ' + process.env.RESPONSEABLE_PUBLIC_ORIGIN + '/j#' + smsInviteToken(id)
@@ -142,7 +142,7 @@ export async function confirmNotification(incident: string, room: string, id: st
     await query('UPDATE notifications SET status = $2, body = $3 WHERE id = $1', [id, status, '']);
   } else {
     const [draft] = await query('SELECT id FROM notifications WHERE id = $1 AND room = $2 AND operator = $3 AND status = $4',
-      [id, room, current.name, 'draft']);
+      [id, room, current.accountId ?? current.name, 'draft']);
     if (draft) redirect(path + '?fehler=alarmierung');
   }
   redirect(path);

@@ -52,7 +52,7 @@ export default async function Workspace({ params, searchParams }: {
         <IncidentStage key={room} path={roomPath(id, room)}
           enabled={Boolean((!demo || process.env.RESPONSEABLE_EXERCISE_MEDIA === "true") && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)}
           board={<Board path={roomPath(id, room)} />} />
-        {manage && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
+        {manage && <Notifications owner={current.accountId ?? current.name} incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
       <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
         <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
