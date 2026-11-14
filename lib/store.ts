@@ -18,7 +18,7 @@ export function db() {
 
 export async function databaseReady() {
   const result = await db().query<{ demo: boolean }>(
-    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 9)',
+    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 10)',
   );
   return result.rows[0]?.demo === demo;
 }
@@ -40,12 +40,12 @@ export function operatorLogin(name: string, password: string) {
   return name === operator && matches;
 }
 
-type Session = { name: string; room: string | null };
+type Session = { sessionHash: string; name: string; room: string | null };
 export async function session() {
   const value = (await cookies()).get(cookieName)?.value;
   if (!value || !validToken(value)) return undefined;
   return (await query<Session>(
-    'SELECT sessions.name, room FROM sessions JOIN responseable_mode ON demo = $3 WHERE hash = $1 AND expires > $2 AND NOT EXISTS (SELECT 1 FROM invitations WHERE id = sessions.invite_id AND revoked_at IS NOT NULL) AND (room IS NOT NULL OR demo OR mfa_verified OR (NOT $4 AND NOT EXISTS (SELECT 1 FROM operator_mfa WHERE operator = sessions.name)))',
+    'SELECT sessions.hash AS "sessionHash", sessions.name, room FROM sessions JOIN responseable_mode ON demo = $3 WHERE hash = $1 AND expires > $2 AND NOT EXISTS (SELECT 1 FROM invitations WHERE id = sessions.invite_id AND revoked_at IS NOT NULL) AND (room IS NOT NULL OR demo OR mfa_verified OR (NOT $4 AND NOT EXISTS (SELECT 1 FROM operator_mfa WHERE operator = sessions.name)))',
     [hash(value), Date.now(), demo, process.env.RESPONSEABLE_MFA_REQUIRED === 'true'],
   ))[0];
 }

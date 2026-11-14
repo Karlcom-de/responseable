@@ -13,6 +13,7 @@ export async function POST(request: Request, { params }: Context) {
   const { id, room } = await params;
   const current = await roomAccess(id, room);
   if (!current) return new Response(null, { status: 404 });
+  if ((await query("SELECT 1 FROM xmpp_rooms WHERE room=$1", [room])).length) return new Response(null, { status: 409 });
   const reader = request.body?.getReader();
   if (!reader) return new Response(null, { status: 400 });
   const decoder = new TextDecoder();

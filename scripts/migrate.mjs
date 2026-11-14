@@ -80,6 +80,9 @@ try {
     );
     CREATE INDEX IF NOT EXISTS transcript_created ON transcript_segments(room,created);
     INSERT INTO responseable_schema VALUES (9) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS xmpp_rooms (room text PRIMARY KEY REFERENCES rooms(id), muc text UNIQUE NOT NULL);
+    CREATE TABLE IF NOT EXISTS xmpp_grants (room text NOT NULL REFERENCES xmpp_rooms(room), session_hash text NOT NULL, jid text NOT NULL, PRIMARY KEY(room,session_hash));
+    INSERT INTO responseable_schema VALUES (10) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);
