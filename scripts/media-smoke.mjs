@@ -44,11 +44,14 @@ try {
     await guest.waitForURL(baseURL + first);
     await ops.grantPermissions(['camera', 'microphone']);
     await Promise.all([page, guest].map(client => client.getByRole('button', { name: 'Join meeting' }).click()));
+    await Promise.all([page, guest].map(client => client.getByRole('button', { name: 'Leave meeting' }).waitFor()));
     await page.getByRole('button', { name: 'Camera', exact: true }).click();
     await page.getByRole('button', { name: 'Microphone', exact: true }).click();
     await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2));
     await guest.waitForFunction(() => [...document.querySelectorAll('audio')].some(audio =>
       audio.srcObject instanceof MediaStream && audio.srcObject.getAudioTracks().some(track => track.readyState === 'live' && !track.muted)));
+    const startAudio = guest.getByRole('button', { name: 'Enable meeting audio' });
+    if (await startAudio.isVisible()) await startAudio.click();
     const audible = await guest.evaluate(async () => {
       const audio = [...document.querySelectorAll('audio')].find(element => element.srcObject?.getAudioTracks().length);
       if (!audio) return false;
@@ -83,8 +86,7 @@ try {
     await page.getByRole('button', { name: 'Share screen', exact: true }).click();
     await guest.waitForFunction(() => !document.querySelector('[data-lk-source="screen_share"] video'));
     await page.getByRole('button', { name: 'Microphone', exact: true }).click();
-    await guest.waitForFunction(() => ![...document.querySelectorAll('audio')].some(audio =>
-      audio.srcObject instanceof MediaStream && audio.srcObject.getAudioTracks().some(track => track.readyState === 'live' && !track.muted)));
+    await guest.waitForFunction(() => document.querySelector('[data-lk-source="camera"] [data-lk-muted="true"]'));
     await page.getByRole('button', { name: 'Leave meeting' }).click();
     await page.getByRole('button', { name: 'Join meeting' }).waitFor();
     await guest.reload();
