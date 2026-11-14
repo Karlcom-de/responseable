@@ -1,4 +1,3 @@
-import { SignIn } from './operator-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +7,7 @@ import exercisePreview from '../docs/incident-room-desktop.webp';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { query as sql, demo, roomPath, session, type Incident } from '../lib/store';
-import { createIncident, enterDemo, login } from './actions';
+import { createIncident, enterDemo } from './actions';
 import { Header, Notice } from './shell';
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ fehler?: string }> }) {
@@ -17,17 +16,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
     const room = (await sql<{ incident: string }>('SELECT incident FROM rooms WHERE id = $1', [current.room]))[0];
     redirect(roomPath(room.incident, current.room));
   }
+  if (!current && !demo && query.fehler === 'anmeldung') redirect('/login?error=sign-in');
+  if (!current && !demo) return <><Header /><main className="entry max-w-3xl">
+    <div className="loginContent">
+      <h1>Incident response workspace</h1>
+      <p className="muted">Coordinate incidents in private rooms with chat, calls, and a shared whiteboard.</p>
+      <div><Button render={<Link href="/login" />}>Sign in</Button></div>
+    </div>
+  </main></>;
   if (!current) return <><Header /><main className="entry loginEntry">
     <div className="loginContent">
-      <div className="eyebrow">Self-hosted · Open Source</div>
-      <h1>Open an incident room. Get the right people in.</h1>
-      <p className="muted">If your usual chat or company sign-in is down, coordinate in a separately hosted instance. Invite internal teams and external responders by link and record decisions on a shared whiteboard.</p>
-      {demo ? <form action={enterDemo}><Button type="submit">Run the exercise</Button></form> : process.env.RESPONSEABLE_PUBLIC_ORIGIN ? <SignIn /> : <form className="stack" action={login}>
-        {query.fehler === 'anmeldung' && <Notice>Sign-in failed.</Notice>}
-        <label>Username<Input name="name" autoComplete="username" required maxLength={80} /></label>
-        <label>Password<Input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
-        <Button type="submit">Sign in</Button>
-      </form>}
+      <h1>Run an incident response exercise</h1>
+      <p className="muted">Coordinate a simulated outage, invite another participant, and record decisions on the whiteboard.</p>
+      <form action={enterDemo}><Button type="submit">Run the exercise</Button></form>
     </div>
     <figure className="loginProof">
       <Image src={exercisePreview} alt="Exercise with two incident rooms, a situation summary and room chat" unoptimized />
