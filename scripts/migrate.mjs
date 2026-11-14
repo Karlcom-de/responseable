@@ -113,6 +113,14 @@ try {
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS credential_generation integer;
     CREATE INDEX IF NOT EXISTS sessions_account_id ON sessions(account_id);
     INSERT INTO responseable_schema VALUES (12) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS alert_webhook_deliveries (
+      id uuid PRIMARY KEY,
+      room text NOT NULL REFERENCES rooms(id),
+      account_id uuid NOT NULL REFERENCES accounts(id),
+      created timestamptz NOT NULL DEFAULT now(),
+      status text NOT NULL CHECK (status IN ('pending','accepted','unclear'))
+    );
+    INSERT INTO responseable_schema VALUES (13) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);
