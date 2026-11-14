@@ -48,6 +48,8 @@ try {
       id text PRIMARY KEY, operator text NOT NULL REFERENCES operator_mfa(operator) ON DELETE CASCADE,
       public_key bytea NOT NULL, counter bigint NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
     );
+    ALTER TABLE operator_credentials ADD COLUMN IF NOT EXISTS label text NOT NULL DEFAULT '';
+    ALTER TABLE operator_credentials ADD COLUMN IF NOT EXISTS last_used_at timestamptz;
     CREATE TABLE IF NOT EXISTS operator_recovery (
       operator text NOT NULL REFERENCES operator_mfa(operator) ON DELETE CASCADE,
       hash text NOT NULL, PRIMARY KEY(operator,hash)
@@ -61,6 +63,7 @@ try {
     );
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_verified boolean NOT NULL DEFAULT false;
     INSERT INTO responseable_schema VALUES (7) ON CONFLICT DO NOTHING;
+
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);

@@ -15,7 +15,7 @@ function origin() {
 
 export async function GET(_: Request, { params }: Context) {
   if ((await params).steps.join('/') !== 'factors' || !await canManage()) return failure();
-  const credentials = await query('SELECT id, created_at AS "createdAt" FROM operator_credentials WHERE operator=$1 ORDER BY created_at', [account()]);
+  const credentials = await query('SELECT id, label, created_at AS "createdAt", last_used_at AS "lastUsedAt" FROM operator_credentials WHERE operator=$1 ORDER BY created_at', [account()]);
   return Response.json({ enrolled: await enrolled(), credentials });
 }
 
@@ -67,7 +67,7 @@ export async function POST(request: Request, { params }: Context) {
         expectedOrigin: url.origin, expectedRPID: url.hostname, requireUserVerification: true,
         credential: { id: entry.id, publicKey: new Uint8Array(entry.public_key), counter: Number(entry.counter) } });
       if (!result.verified) return failure();
-      if (!(await query('UPDATE operator_credentials SET counter=$2 WHERE id=$1 AND counter=$3 RETURNING id',
+      if (!(await query('UPDATE operator_credentials SET counter=$2,last_used_at=now() WHERE id=$1 AND counter=$3 RETURNING id',
         [entry.id, result.authenticationInfo.newCounter, entry.counter]))[0]) return failure();
       await finishLogin();
       await challenge('password', 'verified');
@@ -98,6 +98,20 @@ export async function POST(request: Request, { params }: Context) {
       await challenge('password', 'verified');
       return Response.json({ codes });
     }
+    if (path === 'factors/recovery') {
+      if (!await enrolled()) return failure();
+      const codes = Array.from({ length: 8 }, () => token());
+      await query(`
+        WITH removed AS (DELETE FROM operator_recovery WHERE operator=$1)
+        INSERT INTO operator_recovery SELECT $1, unnest($2::text[])
+      `, [account(), codes.map(hash)]);
+      return Response.json({ codes });
+    }
+    if (path === 'factors/passkey/delete') {
+      if (typeof data?.id !== 'string') return failure('invalid_input', 400);
+      await query('DELETE FROM operator_credentials WHERE id=$1 AND operator=$2', [data.id, account()]);
+      return ok();
+    }
     if (path === 'factors/passkey/options') {
       if (!await enrolled()) return failure('totp_required', 409);
       const options = await generateRegistrationOptions({ rpName: 'ResponseAble', rpID: url.hostname, userName: account()!,
@@ -113,8 +127,8 @@ export async function POST(request: Request, { params }: Context) {
         expectedOrigin: url.origin, expectedRPID: url.hostname, requireUserVerification: true });
       if (!result.verified) return failure();
       const { credential } = result.registrationInfo;
-      if (!(await query('INSERT INTO operator_credentials(id,operator,public_key,counter) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING id',
-        [credential.id, account(), Buffer.from(credential.publicKey), credential.counter]))[0]) return failure('already_registered', 409);
+      if (!(await query('INSERT INTO operator_credentials(id,operator,public_key,counter,label) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING RETURNING id',
+        [credential.id, account(), Buffer.from(credential.publicKey), credential.counter, typeof data.label === 'string' && !data.label.includes('\0') ? data.label.trim().slice(0, 80) : '']))[0]) return failure('already_registered', 409);
       return ok();
     }
     return failure('not_found', 404);
