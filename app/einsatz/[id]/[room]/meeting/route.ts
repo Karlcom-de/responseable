@@ -7,7 +7,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const current = await roomAccess(id, room);
   if (!current) return new Response(null, { status: 404 });
   const { LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET } = process.env;
-  if (demo || !LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) return new Response(null, { status: 503 });
+  if ((demo && process.env.RESPONSEABLE_EXERCISE_MEDIA !== "true") || !LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) return new Response(null, { status: 503 });
   const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     name: current.name, identity: randomUUID(), ttl: '2m',
   });

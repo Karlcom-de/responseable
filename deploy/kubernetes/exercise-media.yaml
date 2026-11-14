@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: exercise-media}
+spec:
+  podSelector:
+    matchLabels: {app: exercise-media}
+  policyTypes: [Ingress]
+  ingress: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: exercise-media}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: exercise-media}
+  template:
+    metadata:
+      labels: {app: exercise-media}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:v1.13.11
+          args: [--dev, --bind, "127.0.0.1", --node-ip, "127.0.0.1"]
+          env:
+            - name: LIVEKIT_CONFIG
+              value: |
+                rtc:
+                  tcp_port: 7881
+                  udp_port: 7882
+                  enable_loopback_candidate: true
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}

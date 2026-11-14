@@ -30,5 +30,6 @@ if ! kubectl -n "$namespace" rollout status deployment/responseable-exercise --t
   done
   exit 1
 fi
+if [ "${RESPONSEABLE_EXERCISE_NO_FORWARD:-0}" = 1 ]; then exit 0; fi
 echo 'Open http://127.0.0.1:3190 and choose Run the exercise.'
 kubectl -n "$namespace" port-forward --address 127.0.0.1 deployment/responseable-exercise 3190:3000

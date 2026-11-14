@@ -59,7 +59,7 @@ export default async function Workspace({ params, searchParams }: {
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
         <IncidentStage key={room} path={roomPath(id, room)}
-          enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)}
+          enabled={Boolean((!demo || process.env.RESPONSEABLE_EXERCISE_MEDIA === "true") && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)}
           board={<Board path={roomPath(id, room)} />} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
