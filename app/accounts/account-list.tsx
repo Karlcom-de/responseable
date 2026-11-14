@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -21,9 +22,9 @@ type Incident = { id: string; title: string };
 
 function RoleField({ value }: { value: Account['role'] }) {
   return <label>Role
-    <select className="block w-full rounded-md border bg-background p-2" name="role" defaultValue={value}>
+    <NativeSelect className="w-full" name="role" defaultValue={value}>
       {roles.map(role => <option key={role} value={role}>{labels[role]}</option>)}
-    </select>
+    </NativeSelect>
   </label>;
 }
 
@@ -111,8 +112,8 @@ export function AccountList({ incidents, currentId }: { incidents: Incident[]; c
       const path = '/' + encodeURIComponent(account.id);
       return <Card key={account.id}>
         <CardHeader>
-          <h2 className="break-all font-semibold">{account.displayName}</h2>
-          <p className="muted break-all">{account.login} · {labels[account.role]} · {account.active ? 'Active' : 'Deactivated'}{self ? ' · You' : ''}</p>
+          <h2 className="[overflow-wrap:anywhere] font-semibold">{account.displayName}</h2>
+          <p className="muted [overflow-wrap:anywhere]">{account.login} · {labels[account.role]} · {account.active ? 'Active' : 'Deactivated'}{self ? ' · You' : ''}</p>
         </CardHeader>
         <CardContent className="grid gap-3">
           <p>{account.role === 'admin' ? 'All incidents' :
@@ -127,7 +128,7 @@ export function AccountList({ incidents, currentId }: { incidents: Incident[]; c
               save={form => update(path + '/incidents', 'PUT', { incidentIds: form.getAll('incidentIds') }, 'Assignments updated.')}>
               <fieldset className="grid gap-2"><legend className="mb-2 font-medium">Incidents</legend>
                 {incidents.length === 0 && <p>No incidents available.</p>}
-                {incidents.map(incident => <label className="flex items-start gap-2 break-all" key={incident.id}>
+                {incidents.map(incident => <label className="flex items-start gap-2 [overflow-wrap:anywhere]" key={incident.id}>
                   <input type="checkbox" name="incidentIds" value={incident.id} defaultChecked={account.incidentIds?.includes(incident.id)} />{incident.title}
                 </label>)}
               </fieldset>
