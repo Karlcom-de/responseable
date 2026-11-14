@@ -18,9 +18,9 @@ try {
   await operator.keyboard.press('Escape');
   await guest.getByLabel('Display name').fill('Exercise guest');
   await guest.getByRole('button', { name: 'Join room', exact: true }).click();
-  await guest.waitForURL(operator.url());
+  await guest.waitForURL(new URL(operator.url()).origin + new URL(operator.url()).pathname);
   await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Join meeting' }).click()));
-  await guest.getByText('Exercise lead', { exact: true }).last().waitFor();
+  await guest.getByRole('button', { name: 'Leave meeting' }).waitFor();
   await operator.getByRole('button', { name: 'Camera', exact: true }).click();
   await operator.getByRole('button', { name: 'Microphone', exact: true }).click();
   await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2), null, { timeout: 20000 });
@@ -30,10 +30,19 @@ try {
   await guest.waitForFunction(() => [...document.querySelectorAll("[data-lk-source=screen_share] video")].some(video => video.videoWidth > 0 && video.readyState >= 2));
   for (const [sender, recipient, label] of [[operator, guest, "Operator"], [guest, operator, "Guest"]]) {
     const text = label + " in call " + marker;
-    await sender.getByLabel("Message", { exact: true }).fill(text);
-    await sender.getByRole("button", { name: "Send", exact: true }).click();
-    await recipient.getByRole("log").getByText(text, { exact: true }).waitFor();
+    if (process.env.SMOKE_XMPP === "1") {
+      const frame = page => page.frameLocator("iframe[title=\"Room chat messages\"]");
+      const composer = frame(sender).locator("textarea").first();
+      await composer.fill(text);
+      await composer.press("Enter");
+      await frame(recipient).getByText(text, { exact: true }).waitFor();
+    } else {
+      await sender.getByLabel("Message", { exact: true }).fill(text);
+      await sender.getByRole("button", { name: "Send", exact: true }).click();
+      await recipient.getByRole("log").getByText(text, { exact: true }).waitFor();
+    }
   }
+  if (process.env.SMOKE_XMPP !== "1") {
   const endpoint = operator.url() + "/chat";
   const key = crypto.randomUUID();
   const retry = "Repeated request " + marker;
@@ -43,6 +52,7 @@ try {
   const { messages } = await (await operator.request.get(endpoint)).json();
   for (const text of ["Operator in call " + marker, "Guest in call " + marker, retry]) {
     assert.equal(messages.filter(message => message.body === text).length, 1);
+  }
   }
   await operator.getByRole("button", { name: "Whiteboard view" }).click();
   const popup = operator.waitForEvent("popup");
