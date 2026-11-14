@@ -1,6 +1,8 @@
 # XMPP pilot template. Mount certificates and the JWT JWK from Secrets.
 hosts: [chat.example.test]
-auth_method: jwt
+auth_method: [jwt, internal]
+jwt_auth_only_rule: jwt_only
+oauth_access: provisioner
 jwt_key: /run/xmpp/jwt.jwk
 certfiles: [/run/xmpp/tls.pem]
 listen:
@@ -18,6 +20,9 @@ acl:
   provisioner:
     user: provisioner@chat.example.test
 access_rules:
+  jwt_only:
+    deny: provisioner
+    allow: all
   provisioner:
     allow: provisioner
     deny: all
@@ -48,6 +53,6 @@ modules:
       public_list: false
       members_only: true
       allow_user_invites: false
-      allowpm: false
+      allowpm: none
       allow_private_messages_from_visitors: nobody
       mam: true
