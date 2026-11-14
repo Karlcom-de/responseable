@@ -1,3 +1,4 @@
+import RoomInvites from '@/app/room-invites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -6,8 +7,8 @@ import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { query as sql, invitation, roomInIncident, roomPath, session, type Incident, type Message, type Room } from '../../../../lib/store';
-import { createInvitation, createRoom, sendMessage } from '../../../actions';
+import { query as sql, roomInIncident, roomPath, session, type Incident, type Message, type Room } from '../../../../lib/store';
+import { createRoom, sendMessage } from '../../../actions';
 import Refresh from '../../../refresh';
 import Notifications from "../../../notifications";
 import Board from "../../../board";
@@ -30,8 +31,6 @@ export default async function Workspace({ params, searchParams }: {
   const incident = (await sql<Incident>('SELECT id, title, summary FROM incidents WHERE id = $1', [id]))[0];
   const rooms = guest ? [active] : await sql<Room>('SELECT id, name, main FROM rooms WHERE incident = $1 ORDER BY main DESC, name, id', [id]);
   const messages = await sql<Message>('SELECT id, name, guest, body, created FROM messages WHERE room = $1 ORDER BY id DESC LIMIT 100', [room]);
-  const invitePath = !guest && typeof query.einladung === 'string' && (await invitation(query.einladung))?.room === room
-    ? '/einladung/' + query.einladung : undefined;
   return <><Header name={current.name} guest={guest} /><main className="workspace">
     <section className="incident">
       {!guest && <Link className="back" href="/">← Incident overview</Link>}
@@ -58,11 +57,7 @@ export default async function Workspace({ params, searchParams }: {
         <h2 className="roomTitle">{active.name}</h2>
         <Link href={roomPath(id, room) + "/wissen"}>Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
-        {!guest && <div className="invites">
-          <form action={createInvitation.bind(null, id, room)}><Button type="submit" variant="outline">Create guest link</Button></form>
-          {invitePath && <div className="inviteResult"><Link href={invitePath} prefetch={false}>Open guest link</Link>
-            <p className="muted">This link is for this room. Copy the link address to share it.</p></div>}
-        </div>}
+        {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
         <Board key={"board-" + room} path={roomPath(id, room)} />
         <Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
