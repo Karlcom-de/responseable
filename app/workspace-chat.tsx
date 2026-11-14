@@ -76,6 +76,16 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       };
       const composerObserver = new MutationObserver(removeAutofocus);
       composerObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["autofocus"] });
+      const element = doc.defaultView?.HTMLElement.prototype;
+      const focus = element?.focus;
+      const restoreFocus = () => { if (element && focus) element.focus = focus; };
+      if (element && focus) {
+        element.focus = function (options) {
+          if (!this.matches("textarea.chat-textarea")) focus.call(this, options);
+        };
+        doc.addEventListener("pointerdown", restoreFocus, { capture: true, once: true });
+        doc.addEventListener("keydown", restoreFocus, { capture: true, once: true });
+      }
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -107,7 +117,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; restoreFocus(); composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
