@@ -43,7 +43,8 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         .conversejs .chat-content__messages { overscroll-behavior-y: contain; }
         .conversejs .chat-msg__text, .conversejs .chat-msg__author,
         .conversejs .chatbox-title__text { overflow-wrap: anywhere; }
-        .conversejs .chatbox-title__text { white-space: normal; }
+        .conversejs .chatbox-title__text, .conversejs .chat-msg__author,
+        .conversejs .chat-msg__author a { white-space: normal; overflow-wrap: anywhere; }
         @media (max-height: 400px) {
           .conversejs .chat-textarea { min-height: 2.5rem; }
         }

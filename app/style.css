@@ -196,8 +196,8 @@ nav a span{color:var(--accent)}
   .workspaceGrid > .chat { grid-area: 1 / 1; position: static; }
   .workspaceGrid > .situation { grid-area: 2 / 1; }
   .workspaceGrid > .rooms { grid-area: 3 / 1; }
-  .workspaceShortcuts { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
-  .workspaceShortcuts a { align-items: center; min-height: 2.5rem; padding: .35rem .55rem; font-size: .8125rem; background: var(--panel); border: 1px solid var(--line); }
+  .workspaceShortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; margin-top: .75rem; position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: .35rem; }
+  .workspaceShortcuts a { align-items: center; justify-content: center; text-align: center; overflow-wrap: anywhere; min-height: 2.5rem; padding: .3rem .15rem; font-size: .75rem; background: var(--panel); border: 1px solid var(--line); }
   .workspaceShortcuts .mobileMeetingLink { font-weight: 650; }
   .workspaceGrid > [id] { scroll-margin-top: 4rem; }
   .workspace .embeddedChat { padding: .625rem; }
