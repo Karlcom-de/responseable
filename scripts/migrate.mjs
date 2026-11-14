@@ -63,7 +63,23 @@ try {
     );
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_verified boolean NOT NULL DEFAULT false;
     INSERT INTO responseable_schema VALUES (7) ON CONFLICT DO NOTHING;
-
+    CREATE TABLE IF NOT EXISTS ai_budget (
+      operator text NOT NULL, capability text NOT NULL, "window" bigint NOT NULL, count integer NOT NULL, PRIMARY KEY(operator,capability)
+    );
+    CREATE TABLE IF NOT EXISTS ai_index (
+      document text PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE, revision integer NOT NULL, model text NOT NULL, chunks jsonb NOT NULL
+    );
+    INSERT INTO responseable_schema VALUES (8) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS transcript_settings (
+      room text PRIMARY KEY REFERENCES rooms(id), enabled boolean NOT NULL DEFAULT false,
+      generation integer NOT NULL DEFAULT 0, notes text NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS transcript_segments (
+      room text NOT NULL REFERENCES rooms(id), id text NOT NULL, speaker text NOT NULL,
+      text text NOT NULL, created bigint NOT NULL, generation integer NOT NULL, PRIMARY KEY(room,id)
+    );
+    CREATE INDEX IF NOT EXISTS transcript_created ON transcript_segments(room,created);
+    INSERT INTO responseable_schema VALUES (9) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);
