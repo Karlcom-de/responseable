@@ -24,7 +24,12 @@ export async function POST(request: Request, { params }: Context) {
   const url = origin();
   if (!url || request.headers.get('origin') !== url.origin) return failure('invalid_origin', 403);
   const path = (await params).steps.join('/');
-  if (!await limit()) return failure('rate_limited', 429);
+  if (!['password', 'totp', 'recovery', 'passkey/options', 'passkey/verify', 'factors/totp/options',
+    'factors/totp/verify', 'factors/recovery', 'factors/passkey/delete', 'factors/passkey/options', 'factors/passkey/verify'].includes(path)) {
+    return failure('not_found', 404);
+  }
+  if (path.startsWith('factors/') && !await canManage()) return failure();
+  if (!await limit(request, path)) return failure('rate_limited', 429);
   const data = await request.json().catch(() => null);
   try {
     if (path === 'password') {
@@ -73,7 +78,6 @@ export async function POST(request: Request, { params }: Context) {
       await challenge('password', 'verified');
       return ok();
     }
-    if (!await canManage()) return failure();
     if (path === 'factors/totp/options') {
       if (!enrollmentKey()) return failure('unavailable', 503);
       if (await enrolled()) return failure('already_enrolled', 409);

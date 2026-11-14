@@ -46,13 +46,21 @@ export async function pending(purpose: string, consume = false) {
   return entry?.payload;
 }
 
-export async function limit() {
+export async function limit(request: Request, path: string) {
+  const trustedIpHeader = process.env.RESPONSEABLE_TRUSTED_CLIENT_IP_HEADER;
+  const source = trustedIpHeader ? request.headers.get(trustedIpHeader)?.trim() : '';
+  const cookie = await authCookie();
+  // The ingress must replace this header. Without it, credential verification is
+  // bounded per browser for established challenges, and perimeter rate limits apply.
+  const identity = source && /^[0-9a-f:.]{2,45}$/i.test(source) ? 'ip:' + source : cookie ? 'browser:' + hash(cookie) : '';
+  if (!identity) return true;
+  const bucket = hash(account() + ':' + identity + ':' + path);
   const now = Date.now();
   const [row] = await query<{ count: number }>(`
     INSERT INTO auth_budget(operator, window_start, count) VALUES ($1,$2,1)
     ON CONFLICT (operator) DO UPDATE SET count = CASE WHEN auth_budget.window_start <= $3 THEN 1 ELSE LEAST(auth_budget.count+1, 1000) END,
     window_start = CASE WHEN auth_budget.window_start <= $3 THEN excluded.window_start ELSE auth_budget.window_start END RETURNING count
-  `, [account(), now, now - 60_000]);
+  `, [bucket, now, now - 60_000]);
   return row.count <= 20;
 }
 
