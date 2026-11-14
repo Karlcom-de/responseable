@@ -86,9 +86,10 @@ try {
   await operator.getByRole('button', { name: 'Create room' }).click();
   await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
   const room = new URL(operator.url()).pathname;
-  await operator.getByRole('button', { name: 'Create guest link' }).click();
-  const invite = await operator.getByRole('link', { name: 'Open guest link' }).getAttribute('href');
-  await guest.goto(other + invite);
+  await operator.getByRole('button', { name: 'Invite', exact: true }).click();
+  await operator.getByRole('button', { name: 'Create invite' }).click();
+  const invite = await operator.getByLabel('Guest link', { exact: true }).inputValue();
+  await guest.goto(other + new URL(invite).pathname + new URL(invite).hash);
   await guest.getByLabel('Display name').fill('Gast Alex');
   await guest.getByRole('button', { name: 'Join room' }).click();
   await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
@@ -189,7 +190,7 @@ try {
     ['GET', '/mock/health', 'mock-only'], ['POST', '/mock/sms/send', 'mock-only'],
   ]);
   assert.equal(writes[1][3].number, '+491555555555');
-  assert.match(writes[1][3].text, /Abschnitt Nord\nEinladung: http:\/\/127\.0\.0\.1:3131\/einladung\//);
+  assert.match(writes[1][3].text, /Abschnitt Nord\nInvitation: http:\/\/127\.0\.0\.1:3131\/j#/);
   await operator.goto(base + room);
   await operator.getByText(/SMS.*Accepted/).waitFor();
   ready = false;
@@ -222,8 +223,8 @@ try {
   } finally {
     await database.end();
   }
-  await guest.goto(other + invite);
-  await guest.getByRole('heading', { name: 'Page unavailable' }).waitFor();
+  await guest.goto(other + new URL(invite).pathname + new URL(invite).hash);
+  await guest.getByText('This invitation is unavailable.', { exact: false }).waitFor();
   await operator.goto(base + room);
   const beforeStop = await (await ops.request.get(base + room + '/board')).json();
   const stopped = new Promise(resolve => children[0].once('exit', resolve));
@@ -262,7 +263,7 @@ try {
   const [verb, endpoint, bearer, sent] = writes.at(-1);
   assert.deepEqual([verb, endpoint, bearer, sent.capability], ['POST', '/bridge', 'Bearer bridge-only', 'sms']);
   assert.match(sent.requestId, /^[a-f0-9-]{36}$/);
-  const invitationUrl = sent.text.split('Einladung: ')[1];
+  const invitationUrl = sent.text.split('Invitation: ')[1];
   await guest.goto(invitationUrl);
   await guest.getByRole('button', { name: 'Join room' }).waitFor();
 

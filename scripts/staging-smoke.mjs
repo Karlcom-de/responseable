@@ -30,9 +30,10 @@ try {
   await operator.getByRole('button', { name: 'Create room' }).click();
   await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
   const room = new URL(operator.url()).pathname;
-  await operator.getByRole('button', { name: 'Create guest link' }).click();
-  const invite = await operator.getByRole('link', { name: 'Open guest link' }).getAttribute('href');
-  await guest.goto(base + invite);
+  await operator.getByRole('button', { name: 'Invite', exact: true }).click();
+  await operator.getByRole('button', { name: 'Create invite' }).click();
+  const invite = await operator.getByLabel('Guest link', { exact: true }).inputValue();
+  await guest.goto(new URL(invite, base).href);
   await guest.getByLabel('Display name').fill('Gast Alex');
   await guest.getByRole('button', { name: 'Join room' }).click();
   await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
