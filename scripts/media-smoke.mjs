@@ -49,6 +49,23 @@ try {
     await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2));
     await guest.waitForFunction(() => [...document.querySelectorAll('audio')].some(audio =>
       audio.srcObject instanceof MediaStream && audio.srcObject.getAudioTracks().some(track => track.readyState === 'live' && !track.muted)));
+    const audible = await guest.evaluate(async () => {
+      const audio = [...document.querySelectorAll('audio')].find(element => element.srcObject?.getAudioTracks().length);
+      if (!audio) return false;
+      const context = new AudioContext();
+      try {
+        const analyzer = context.createAnalyser();
+        context.createMediaStreamSource(audio.srcObject).connect(analyzer);
+        const data = new Float32Array(analyzer.fftSize);
+        for (let attempt = 0; attempt < 30; attempt++) {
+          analyzer.getFloatTimeDomainData(data);
+          if (data.some(sample => Math.abs(sample) > 0.005)) return true;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return false;
+      } finally { await context.close(); }
+    });
+    assert(audible, 'Remote microphone delivered no audible samples');
     await page.getByRole('button', { name: 'Share screen', exact: true }).click();
     await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video =>
       video.closest('[data-lk-source="screen_share"]') && video.videoWidth > 0 && video.readyState >= 2));
@@ -71,6 +88,12 @@ try {
     await page.getByRole('button', { name: 'Leave meeting' }).click();
     await page.getByRole('button', { name: 'Join meeting' }).waitFor();
     await guest.reload();
+    await page.getByLabel('New subroom').fill('Separate chat');
+    await page.getByRole('button', { name: 'Create room' }).click();
+    await page.getByRole('heading', { name: 'Separate chat' }).waitFor();
+    const separate = new URL(page.url()).pathname;
+    assert.equal((await guest.request.get(baseURL + separate + '/chat')).status(), 404);
+    assert.deepEqual((await (await ops.request.get(baseURL + separate + '/chat')).json()).messages, []);
     for (const text of [message, reply]) await guest.getByRole('log').getByText(text, { exact: true }).waitFor();
     console.log('Bidirectional chat, draft refresh, mute, stop sharing, leave and revisit passed.');
     console.log('Second Chromium context received remote camera, microphone and screen-share tracks.');
