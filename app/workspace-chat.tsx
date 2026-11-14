@@ -52,7 +52,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         converse-root.converse-embedded converse-muc.chatroom .box-flyout {
           width: 100% !important; min-width: 0 !important; max-width: 100%; flex-shrink: 1;
         }
-        .conversejs .chat-content__notifications,
+        .conversejs .chatbox .chat-content .chat-content__notifications,
         .conversejs .chat-content__notifications *,
         .conversejs .chat-msg__text a { white-space: normal; overflow-wrap: anywhere; }
         .conversejs .chat-content__messages { overscroll-behavior-y: contain; }
