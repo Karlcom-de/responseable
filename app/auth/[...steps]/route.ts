@@ -34,6 +34,7 @@ export async function POST(request: Request, context: Context) {
   if (path === 'password' || path === 'passkey/options') {
     const data = await request.clone().json().catch(() => null);
     if (typeof data?.name !== 'string' || data.name.length > 80) return failure();
+    if (!await limit(request, path, data.name)) return failure('rate_limited', 429);
     identity = (await query<AuthIdentity>(
       'SELECT id,login,credential_generation AS generation FROM accounts WHERE login=$1 AND active AND ($2 OR NOT require_password_change)', [data.name, path === "password"],
     ))[0];
@@ -53,7 +54,7 @@ async function authenticate(request: Request, { params }: Context, identity?: Au
     return failure('not_found', 404);
   }
   if (path.startsWith('factors/') && !await canManage()) return failure();
-  if (!await limit(request, path)) return failure('rate_limited', 429);
+  if ((!identity || !['password', 'passkey/options'].includes(path)) && !await limit(request, path)) return failure('rate_limited', 429);
   const data = await request.json().catch(() => null);
   try {
     if (path === 'password') {
