@@ -121,7 +121,7 @@ export async function invitation(value: string) {
     SELECT rooms.id AS room, rooms.incident, rooms.name, invitations.expires
     FROM invitations JOIN rooms ON rooms.id = invitations.room JOIN responseable_mode ON demo = $3
     WHERE hash = $1 AND expires > $2 AND revoked_at IS NULL AND uses < max_uses
-  `, [hash(value), Date.now(), demo, accountsEnabled(), process.env.RESPONSEABLE_MFA_REQUIRED === "true"]))[0];
+  `, [hash(value), Date.now(), demo]))[0];
 }
 
 export const roomPath = (incident: string, room: string) => `/einsatz/${incident}/${room}`;

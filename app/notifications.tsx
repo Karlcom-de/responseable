@@ -11,8 +11,8 @@ import { Notice } from './shell';
 
 type Attempt = { id: string; number: string; body: string; method: Method; provider: Provider | null; status: Status; created: string };
 
-export default async function Notifications({ incident, room, draft, error }: {
-  incident: string; room: string; draft?: string; error: boolean;
+export default async function Notifications({ incident, room, owner, draft, error }: {
+  incident: string; room: string; owner: string; draft?: string; error: boolean;
 }) {
   const available = notificationsAvailable();
   const attempts = await query<Attempt>(`
@@ -22,8 +22,8 @@ export default async function Notifications({ incident, room, draft, error }: {
   `, [incident]);
   const [preview] = typeof draft === 'string' && /^[a-f0-9-]{36}$/.test(draft) ? await query<Attempt>(`
     SELECT id, number, body, method, provider FROM notifications WHERE id::text = $1 AND room = $2
-      AND status = 'draft' AND created > $3
-  `, [draft, room, Date.now() - 900_000]) : [];
+      AND status = 'draft' AND created > $3 AND operator=$4
+  `, [draft, room, Date.now() - 900_000, owner]) : [];
   return <section className="roomForm">
     <h3 className="iconLabel"><BellRing className="navIcon" aria-hidden="true" />Alerting</h3>
     {error && <Notice>Check the phone number and provider configuration.</Notice>}

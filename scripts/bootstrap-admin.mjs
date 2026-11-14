@@ -35,9 +35,12 @@ try {
       [login, passwordHash],
     );
     if (mode === 'legacy') {
-      for (const table of ['operator_mfa', 'operator_credentials', 'operator_recovery']) {
+      await db.query('INSERT INTO operator_mfa(operator,seed,last_step) SELECT $1,seed,last_step FROM operator_mfa WHERE operator=$2', [account.id, login]);
+      for (const table of ['operator_credentials', 'operator_recovery']) {
         await db.query(`UPDATE ${table} SET operator=$1 WHERE operator=$2`, [account.id, login]);
       }
+      await db.query('DELETE FROM operator_mfa WHERE operator=$1', [login]);
+      await db.query("UPDATE notifications SET operator=$1 WHERE operator=$2 AND status='draft'", [account.id, login]);
       await db.query('DELETE FROM auth_challenges WHERE operator=$1', [login]);
       await db.query('DELETE FROM sessions WHERE account_id IS NULL AND room IS NULL AND name=$1', [login]);
     }
