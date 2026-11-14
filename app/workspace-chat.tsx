@@ -45,13 +45,24 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         .conversejs .chatbox-title__text { overflow-wrap: anywhere; }
         .conversejs .chatbox-title__text, .conversejs .chat-msg__author,
         .conversejs .chat-msg__author a { white-space: normal; overflow-wrap: anywhere; }
+        .conversejs .chat-msg__author { min-width: 0; }
         @media (max-height: 400px) {
           .conversejs .chat-textarea { min-height: 2.5rem; }
         }
       `;
       doc.head.append(style);
       const root = doc.createElement('converse-root');
+      // Keep the embedded client out of the focus order while it opens its room.
+      root.inert = true;
       doc.body.append(root);
+      const ready = new MutationObserver(() => {
+        if (root.querySelector('textarea.chat-textarea, [role="alert"], .modal.show')) {
+          root.inert = false;
+          ready.disconnect();
+        }
+      });
+      ready.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      const enableInteraction = window.setTimeout(() => { root.inert = false; ready.disconnect(); }, 8000);
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -83,7 +94,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; ready.disconnect(); clearTimeout(enableInteraction); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
