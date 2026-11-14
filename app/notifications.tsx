@@ -24,6 +24,7 @@ export default async function Notifications({ incident, room, owner, draft, erro
     SELECT id, number, body, method, provider FROM notifications WHERE id::text = $1 AND room = $2
       AND status = 'draft' AND created > $3 AND operator=$4
   `, [draft, room, Date.now() - 900_000, owner]) : [];
+  const visiblePreview = preview && (preview.method !== "sms" || available.sms);
   return <section className="roomForm">
     <h3 className="iconLabel"><BellRing className="navIcon" aria-hidden="true" />Alerting</h3>
     {error && <Notice>Check the phone number and provider configuration.</Notice>}
@@ -38,7 +39,7 @@ export default async function Notifications({ incident, room, owner, draft, erro
         {available.voice && <label>Voice alert message<Textarea name="speech" maxLength={500} rows={2} /></label>}
         <Button type="submit" variant="outline">Preview</Button>
       </form>}
-    {preview && <div className="inviteResult">
+    {visiblePreview && <div className="inviteResult">
       <p><strong>{methodLabels[preview.method]}</strong> · {preview.number}{preview.provider && ' · ' + providerLabels[preview.provider]}</p>
       {preview.body && <p className="description">{preview.body}
         {preview.method === 'sms' && !preview.body.includes('/einladung/') &&
