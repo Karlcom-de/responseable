@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--text);
@@ -8,15 +10,15 @@
   --color-card-foreground: var(--text);
   --color-popover: var(--panel);
   --color-popover-foreground: var(--text);
-  --color-primary: var(--accent);
-  --color-primary-foreground: #231807;
+  --color-primary: var(--text);
+  --color-primary-foreground: var(--bg);
   --color-secondary: var(--selected);
   --color-secondary-foreground: var(--text);
   --color-accent: var(--selected);
   --color-accent-foreground: var(--text);
-  --color-muted: var(--panel);
+  --color-muted: var(--selected);
   --color-muted-foreground: var(--muted);
-  --color-destructive: #ffa99e;
+  --color-destructive: var(--danger);
   --color-border: var(--line);
   --color-input: var(--line);
   --color-ring: var(--accent);
@@ -24,10 +26,33 @@
 }
 
 
-:root{color-scheme:dark;--bg:#0d151d;--panel:#151f29;--line:#364755;--text:#edf4f7;--muted:#a6b6c4;--accent:#ffcf70;--selected:#352b1c;font-family:"Instrument Sans",system-ui,sans-serif}
+:root {
+  color-scheme: light;
+  --bg: #fafafa;
+  --panel: #fff;
+  --line: #d4d4d4;
+  --text: #171717;
+  --muted: #525252;
+  --accent: #525252;
+  --selected: #ededed;
+  --danger: #b42318;
+  font-family: system-ui, sans-serif;
+}
+:root.dark {
+  color-scheme: dark;
+  --bg: #121212;
+  --panel: #1c1c1c;
+  --line: #404040;
+  --text: #fafafa;
+  --muted: #b5b5b5;
+  --accent: #d4d4d4;
+  --selected: #303030;
+  --danger: #ffa99e;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text)}
-a{color:var(--accent);text-underline-offset:.2em}
+a{text-underline-offset:.2em}
+.back, .situation > a, .markdown-content a { text-decoration: underline; }
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 textarea{resize:vertical}
 label{font-size:.88rem;font-weight:600}
@@ -56,7 +81,7 @@ p{line-height:1.55}
 .panel > h2{margin-bottom:.9rem}
 .stack{display:grid;gap:1rem;justify-items:start}
 .stack label{width:100%}
-.notice{color:#ffd194}
+.notice{color:var(--danger)}
 .listing,nav ul{list-style:none;margin:0;padding:0}
 .listing a,nav a{display:flex;gap:.5rem;padding:.7rem;border-radius:6px;text-decoration:none;color:var(--text);overflow-wrap:anywhere}
 .listing a{flex-direction:column;border-top:1px solid var(--line)}
@@ -147,3 +172,7 @@ nav a span{color:var(--accent)}
 .workspace .roomForm, .workspace .invites { margin-top: .2rem; padding-top: .7rem; }
 .workspace .chatScroll { height: clamp(180px, 32vh, 380px); }
 .workspace .composer { margin-top: .25rem; }
+
+
+.whiteboardPage { margin-inline: auto; padding: 1rem clamp(1rem, 4vw, 3rem); }
+.whiteboardPage .canvas { height: max(360px, calc(100dvh - 13rem)); }

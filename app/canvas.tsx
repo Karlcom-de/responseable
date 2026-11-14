@@ -1,5 +1,6 @@
 'use client';
 
+import { useTheme } from 'next-themes';
 import { CaptureUpdateAction, Excalidraw } from '@excalidraw/excalidraw';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
@@ -13,6 +14,7 @@ const supported = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', '
 const signature = (element: ExcalidrawElement) => `${element.version}:${element.versionNonce}:${element.isDeleted}`;
 
 export default function Canvas({ path }: { path: string }) {
+  const { resolvedTheme } = useTheme();
   const [api, setApi] = useState<ExcalidrawImperativeAPI>();
   const [error, setError] = useState('');
   const known = useRef(new Map<string, string>());
@@ -74,7 +76,7 @@ export default function Canvas({ path }: { path: string }) {
   return <>
     {error && <p className="notice" role="alert">{error}</p>}
     <div className="canvas" aria-label="Shared whiteboard">
-      <Excalidraw langCode="en" theme="dark" excalidrawAPI={setApi}
+      <Excalidraw langCode="en" theme={resolvedTheme === 'dark' ? 'dark' : 'light'} excalidrawAPI={setApi}
         UIOptions={{ canvasActions: { loadScene: false, saveToActiveFile: false, export: false }, tools: { image: false } }}
         onChange={scene => {
           if (!ready.current) return;

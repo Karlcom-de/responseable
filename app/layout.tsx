@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './style.css';
+import { ThemeProvider } from './theme';
 
 export const metadata: Metadata = {
   title: 'ResponseAble | Incident response rooms',
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body>{children}</body></html>;
+  return <html lang="en" suppressHydrationWarning><body><ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>{children}</ThemeProvider></body></html>;
 }
