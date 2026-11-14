@@ -59,6 +59,8 @@ spec:
               value: "3000"
             - name: HOSTNAME
               value: "0.0.0.0"
+            - name: RESPONSEABLE_ACCOUNTS_ENABLED
+              value: "true"
             - name: RESPONSEABLE_MODE
               value: production
             - name: RESPONSEABLE_PUBLIC_ORIGIN

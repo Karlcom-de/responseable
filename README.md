@@ -46,7 +46,7 @@ npm run dev -- --hostname 127.0.0.1
 
 Open `http://localhost:3000` and select **Run the exercise** on the welcome page. The example uses a dedicated local database and simulated incident data. Demo mode disables external media and phone operations. If you already have PostgreSQL, skip Compose and put your empty database's connection string in `DATABASE_URL`.
 
-For a real instance, use a separate PostgreSQL database, set `RESPONSEABLE_MODE=real`, configure `RESPONSEABLE_OPERATOR`, and set `RESPONSEABLE_PASSWORD_HASH` to the output of `node scripts/password.mjs`. The script reads the password from standard input. Protect the configured origin with HTTPS and set `RESPONSEABLE_SECURE_COOKIE=true`. The origin must match the exact address users open, including the port if present.
+For a real instance, follow the [Kubernetes production installation](docs/kubernetes.md#production-installation). It sets up persistent PostgreSQL, HTTPS, per-account MFA and the first administrator. Keep the exercise database separate.
 
 ## Integrations
 
