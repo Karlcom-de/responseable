@@ -10,7 +10,7 @@ function settings() {
   const { XMPP_ADMIN_URL: admin, XMPP_ADMIN_TOKEN: bearer, XMPP_JWT_SECRET: secret,
     XMPP_DOMAIN: domain, XMPP_MUC_DOMAIN: service, XMPP_WEBSOCKET_URL: websocketUrl } = process.env;
   if (!admin || !bearer || !secret || secret.length < 32 || !domain || !service ||
-    !websocketUrl || new URL(websocketUrl).protocol !== 'wss:') throw Error('XMPP unavailable');
+    !websocketUrl || (new URL(websocketUrl).protocol !== 'wss:' && !(process.env.RESPONSEABLE_MODE === 'demo' && process.env.XMPP_EXERCISE_LOOPBACK === 'true' && websocketUrl === 'ws://127.0.0.1:7883/xmpp-websocket'))) throw Error('XMPP unavailable');
   return { admin, bearer, secret, domain, service, websocketUrl };
 }
 
