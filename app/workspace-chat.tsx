@@ -50,7 +50,7 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
             auto_join_rooms: [{ jid: credentials.roomJid, nick: credentials.nick }],
             persistent_store: 'sessionStorage', clear_cache_on_logout: true,
             visible_toolbar_buttons: { call: false },
-            allow_logout: false, allow_registration: false, auto_reconnect: true, loglevel: 'silent',
+            allow_logout: false, allow_registration: false, auto_reconnect: true, loglevel: 'error',
           });
         } catch { if (active) setFailed(true); }
       };
