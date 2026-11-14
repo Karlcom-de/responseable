@@ -19,7 +19,7 @@ export default function Meeting({ path, enabled }: { path: string; enabled: bool
       if (!response.ok) throw Error();
       setAccess(await response.json());
     } catch {
-      setError('Der Meetingbeitritt ist fehlgeschlagen.');
+      setError('Could not join the meeting.');
     } finally {
       setPending(false);
     }
@@ -27,12 +27,12 @@ export default function Meeting({ path, enabled }: { path: string; enabled: bool
 
   return <section className="roomForm">
     <h3>Meeting</h3>
-    {!enabled ? <p className="muted">Meetingdienst nicht eingerichtet.</p>
+    {!enabled ? <p className="muted">Meetings are not configured.</p>
       : access ? <Media {...access} leave={() => setAccess(undefined)} fail={() => {
         setAccess(undefined);
-        setError('Verbindung zum Meetingdienst fehlgeschlagen.');
+        setError('Could not connect to the meeting service.');
       }} />
-        : <Button variant="outline" disabled={pending} onClick={connect}>{pending ? 'Verbindung läuft …' : 'Meeting beitreten'}</Button>}
+        : <Button variant="outline" disabled={pending} onClick={connect}>{pending ? 'Connecting…' : 'Join meeting'}</Button>}
     {error && <p className="notice" role="alert">{error}</p>}
   </section>;
 }

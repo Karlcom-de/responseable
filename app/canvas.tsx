@@ -61,7 +61,7 @@ export default function Canvas({ path }: { path: string }) {
         ready.current = true;
         setError('');
       } catch {
-        if (active) setError('Lagebild konnte nicht synchronisiert werden.');
+        if (active) setError('Could not sync the whiteboard.');
       } finally {
         running = false;
       }
@@ -73,8 +73,8 @@ export default function Canvas({ path }: { path: string }) {
 
   return <>
     {error && <p className="notice" role="alert">{error}</p>}
-    <div className="canvas" aria-label="Gemeinsames Lagebild">
-      <Excalidraw langCode="de-DE" theme="dark" excalidrawAPI={setApi}
+    <div className="canvas" aria-label="Shared whiteboard">
+      <Excalidraw langCode="en" theme="dark" excalidrawAPI={setApi}
         UIOptions={{ canvasActions: { loadScene: false, saveToActiveFile: false, export: false }, tools: { image: false } }}
         onChange={scene => {
           if (!ready.current) return;

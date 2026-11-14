@@ -23,24 +23,24 @@ export default async function Notifications({ incident, room, draft, error }: {
       AND status = 'draft' AND created > $3
   `, [draft, room, Date.now() - 900_000]) : [];
   return <section className="roomForm">
-    <h3>Alarmierung</h3>
-    {error && <Notice>Bitte prüfen Sie Rufnummer und Dienstkonfiguration.</Notice>}
-    {!Object.values(available).some(Boolean) ? <p className="muted">Telefoniedienst nicht eingerichtet.</p>
+    <h3>Alerting</h3>
+    {error && <Notice>Check the phone number and provider configuration.</Notice>}
+    {!Object.values(available).some(Boolean) ? <p className="muted">Phone alerting is not configured.</p>
       : <form className="stack" action={prepareNotification.bind(null, incident, room)}>
-        <label>Internationale Rufnummer<Input name="number" type="tel" placeholder="+491234567890" required maxLength={16} /></label>
-        <label>Aktion<NativeSelect name="method">
+        <label>International phone number<Input name="number" type="tel" placeholder="+491234567890" required maxLength={16} /></label>
+        <label>Action<NativeSelect name="method">
           {Object.entries(available).map(([method, provider]) => provider && <option key={method} value={method}>
             {methodLabels[method as Method]}{method === 'sms' || method === 'voice' ? ' · ' + providerLabels[provider] : ''}
           </option>)}
         </NativeSelect></label>
-        {available.voice && <label>Ansage für den Sprachalarm<Textarea name="speech" maxLength={500} rows={2} /></label>}
-        <Button type="submit" variant="outline">Vorschau anzeigen</Button>
+        {available.voice && <label>Voice alert message<Textarea name="speech" maxLength={500} rows={2} /></label>}
+        <Button type="submit" variant="outline">Preview</Button>
       </form>}
     {preview && <div className="inviteResult">
       <p><strong>{methodLabels[preview.method]}</strong> · {preview.number}{preview.provider && ' · ' + providerLabels[preview.provider]}</p>
       {preview.body && <p className="description">{preview.body}</p>}
       <form action={confirmNotification.bind(null, incident, room, preview.id)}>
-        <Button type="submit">{preview.method === 'sms' ? 'SMS senden' : preview.method === 'voice' ? 'Sprachalarm auslösen' : 'Anruf auslösen'}</Button>
+        <Button type="submit">{preview.method === 'sms' ? 'Send SMS' : preview.method === 'voice' ? 'Send voice alert' : 'Place call'}</Button>
       </form>
     </div>}
     {attempts.length > 0 && <ul className="attempts">{attempts.map(attempt => <li key={attempt.id}>

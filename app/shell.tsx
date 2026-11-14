@@ -11,8 +11,8 @@ export function Header({ name, guest = false }: { name?: string; guest?: boolean
   return <header className="top">
     {guest ? <strong className="brand">{brand}</strong> : <Link className="brand" href="/">{brand}</Link>}
     <div className="identity">
-      {demo && <Badge variant="outline">Übungsmodus</Badge>}
-      {name && <><span>{name}</span><form action={logout}><Button type="submit" variant="ghost">Abmelden</Button></form></>}
+      {demo && <Badge variant="outline">Exercise mode</Badge>}
+      {name && <><span>{name}</span><form action={logout}><Button type="submit" variant="ghost">Sign out</Button></form></>}
     </div>
   </header>;
 }

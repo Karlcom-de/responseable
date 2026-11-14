@@ -19,18 +19,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   if (!current) return <><Header /><main className="entry loginEntry">
     <div className="loginContent">
       <div className="eyebrow">Self-hosted · Open Source</div>
-      <h1>Einsatzraum öffnen. Die richtigen Leute dazuholen.</h1>
-      <p className="muted">Wenn Chat oder Firmenlogin ausfallen, koordiniert ihr den Einsatz in einer separat betriebenen Instanz. Holt interne Teams und externe Beteiligte per Link dazu und haltet Entscheidungen am gemeinsamen Lagebild fest.</p>
-      {demo ? <form action={enterDemo}><Button type="submit">Übungsleitstelle öffnen</Button></form> : <form className="stack" action={login}>
-        {query.fehler === 'anmeldung' && <Notice>Anmeldung fehlgeschlagen.</Notice>}
-        <label>Kennung<Input name="name" autoComplete="username" required maxLength={80} /></label>
-        <label>Passwort<Input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
-        <Button type="submit">Anmelden</Button>
+      <h1>Open an incident room. Get the right people in.</h1>
+      <p className="muted">If your usual chat or company sign-in is down, coordinate in a separately hosted instance. Invite internal teams and external responders by link and record decisions on a shared whiteboard.</p>
+      {demo ? <form action={enterDemo}><Button type="submit">Run the exercise</Button></form> : <form className="stack" action={login}>
+        {query.fehler === 'anmeldung' && <Notice>Sign-in failed.</Notice>}
+        <label>Username<Input name="name" autoComplete="username" required maxLength={80} /></label>
+        <label>Password<Input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
+        <Button type="submit">Sign in</Button>
       </form>}
     </div>
     <figure className="loginProof">
-      <Image src={exercisePreview} alt="Übungseinsatz mit zwei Einsatzräumen, Lagebeschreibung und Raumchat" unoptimized />
-      <figcaption>Übungslage · Einsatzleitung und Abschnitt Nord</figcaption>
+      <Image src={exercisePreview} alt="Exercise with two incident rooms, a situation summary and room chat" unoptimized />
+      <figcaption>Exercise · Incident command and North sector</figcaption>
     </figure>
   </main></>;
 
@@ -39,19 +39,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
     JOIN rooms ON rooms.incident = incidents.id AND rooms.main = 1 ORDER BY created DESC
   `);
   return <><Header name={current.name} /><main className="overview">
-    <div className="eyebrow">Leitstelle</div><h1>Lageübersicht</h1>
+    <div className="eyebrow">Response workspace</div><h1>Incident overview</h1>
     <div className="overviewGrid">
-      <Card className="panel" role="region"><h2>Einsätze <span className="count">{incidents.length}</span></h2>
+      <Card className="panel" role="region"><h2>Incidents <span className="count">{incidents.length}</span></h2>
         {incidents.length ? <ul className="listing">{incidents.map(incident => <li key={incident.id}>
           <Link href={roomPath(incident.id, incident.room)}><strong>{incident.title}</strong><span>{incident.summary}</span></Link>
-        </li>)}</ul> : <p className="muted">Es sind noch keine Einsätze angelegt.</p>}
+        </li>)}</ul> : <p className="muted">No incidents yet.</p>}
       </Card>
-      <Card className="panel" role="region"><h2>Neuer Einsatz</h2>
+      <Card className="panel" role="region"><h2>New incident</h2>
         <form className="stack" action={createIncident}>
-          {query.fehler === 'titel' && <Notice>Bitte geben Sie eine Einsatzbezeichnung ein.</Notice>}
-          <label>Einsatzbezeichnung<Input name="title" required maxLength={100} /></label>
-          <label>Lagebeschreibung<Textarea name="summary" rows={4} maxLength={1500} /></label>
-          <Button type="submit">Einsatz anlegen</Button>
+          {query.fehler === 'titel' && <Notice>Enter an incident title.</Notice>}
+          <label>Incident title<Input name="title" required maxLength={100} /></label>
+          <label>Situation summary<Textarea name="summary" rows={4} maxLength={1500} /></label>
+          <Button type="submit">Create incident</Button>
         </form>
       </Card>
     </div>

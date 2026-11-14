@@ -7,8 +7,8 @@ export type Method = 'sms' | 'android' | 'voice' | 'sip';
 export type Provider = 'android' | 'webhook' | 'aws' | 'sip';
 export const providerLabels: Record<Provider, string> = { android: 'Android', webhook: 'Webhook', aws: 'AWS', sip: 'LiveKit SIP' };
 export type Status = 'pending' | 'accepted' | 'rejected' | 'unknown';
-export const methodLabels: Record<Method, string> = { sms: 'SMS', android: 'Über Android anrufen', voice: 'Sprachalarm abspielen', sip: 'In den Meetingraum anrufen' };
-export const statusLabels: Record<Status, string> = { pending: 'Offen', accepted: 'Angenommen', rejected: 'Abgelehnt', unknown: 'Unklar' };
+export const methodLabels: Record<Method, string> = { sms: 'SMS', android: 'Call via Android', voice: 'Play voice alert', sip: 'Call into the meeting room' };
+export const statusLabels: Record<Status, string> = { pending: 'Pending', accepted: 'Accepted', rejected: 'Rejected', unknown: 'Unknown' };
 
 function endpoint(value: string | undefined, allowLoopback = true) {
   try {
