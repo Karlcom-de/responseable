@@ -39,18 +39,7 @@ export default async function Workspace({ params, searchParams }: {
       <a href="#chat">Room chat</a><a href="#situation">Stage</a><a href="#room-meeting" className="mobileMeetingLink">Meeting<span className="mobileMeetingStatus"> · In call</span></a><a href="#rooms">Rooms</a>
     </nav>
     <div className="workspaceGrid">
-      <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
-        <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
-          <RoomDestination href={roomPath(id, item.id)} name={item.name} current={item.id === room}>
-            {item.main ? <DoorOpen className="navIcon" aria-hidden="true" /> : <GitBranch className="navIcon" aria-hidden="true" />}{item.name}
-          </RoomDestination>
-        </li>)}</ul></nav>
-        {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
-          {query.fehler === 'raum' && <Notice>Enter a room name.</Notice>}
-          <label>New subroom<Input name="name" placeholder="e.g. North sector" required maxLength={80} /></label>
-          <Button type="submit" variant="outline">Create room</Button>
-        </form>}
-      </Card>
+      <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo && process.env.XMPP_EXERCISE_LOOPBACK !== 'true'} roomTitle={active.name} />
       <Card className="panel situation" id="situation" role="region">
         <div className="eyebrow">{active.main ? 'Main room' : 'Subroom'}</div>
         <h2 className="roomTitle">{active.name}</h2>
@@ -63,7 +52,18 @@ export default async function Workspace({ params, searchParams }: {
           board={<Board path={roomPath(id, room)} />} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
-      <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo && process.env.XMPP_EXERCISE_LOOPBACK !== 'true'} roomTitle={active.name} />
+      <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
+        <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
+          <RoomDestination href={roomPath(id, item.id)} name={item.name} current={item.id === room}>
+            {item.main ? <DoorOpen className="navIcon" aria-hidden="true" /> : <GitBranch className="navIcon" aria-hidden="true" />}{item.name}
+          </RoomDestination>
+        </li>)}</ul></nav>
+        {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
+          {query.fehler === 'raum' && <Notice>Enter a room name.</Notice>}
+          <label>New subroom<Input name="name" placeholder="e.g. North sector" required maxLength={80} /></label>
+          <Button type="submit" variant="outline">Create room</Button>
+        </form>}
+      </Card>
     </div>
   </main></>;
 }
