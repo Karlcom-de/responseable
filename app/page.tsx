@@ -1,3 +1,4 @@
+import { SignIn } from './operator-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +22,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
       <div className="eyebrow">Self-hosted · Open Source</div>
       <h1>Open an incident room. Get the right people in.</h1>
       <p className="muted">If your usual chat or company sign-in is down, coordinate in a separately hosted instance. Invite internal teams and external responders by link and record decisions on a shared whiteboard.</p>
-      {demo ? <form action={enterDemo}><Button type="submit">Run the exercise</Button></form> : <form className="stack" action={login}>
+      {demo ? <form action={enterDemo}><Button type="submit">Run the exercise</Button></form> : process.env.RESPONSEABLE_PUBLIC_ORIGIN ? <SignIn /> : <form className="stack" action={login}>
         {query.fehler === 'anmeldung' && <Notice>Sign-in failed.</Notice>}
         <label>Username<Input name="name" autoComplete="username" required maxLength={80} /></label>
         <label>Password<Input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
