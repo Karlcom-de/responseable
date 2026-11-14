@@ -5,7 +5,6 @@ import { redeemInvite, smsInviteToken } from '../lib/invites';
 import { randomUUID } from 'node:crypto';
 import { dispatch, isMethod, notificationsAvailable, type Method, type Provider } from '../lib/notifications';
 import { notFound, redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
 import { query, demo, endSession, hash, newId, operatorLogin, roomInIncident, roomPath, session, startSession, token } from '../lib/store';
 
 function field(form: FormData, name: string, max: number, trim = true) {
@@ -79,19 +78,6 @@ export async function join(value: string, form: FormData) {
   const result = await redeemInvite(value, name);
   if (!result.href) notFound();
   redirect(result.href);
-}
-
-export async function sendMessage(incident: string, room: string, form: FormData) {
-  const current = await session();
-  if (!current) redirect('/');
-  if ((current.room !== null && current.room !== room) || !await roomInIncident(incident, room)) notFound();
-  const body = field(form, 'body', 2000);
-  const path = roomPath(incident, room);
-  if (!body) redirect(path + '?fehler=nachricht');
-  await query('INSERT INTO messages(room, name, guest, body, created) VALUES ($1, $2, $3, $4, $5)',
-    [room, current.name, Number(current.room !== null), body, Date.now()]);
-  revalidatePath(path);
-  redirect(path);
 }
 
 export async function prepareNotification(incident: string, room: string, form: FormData) {
