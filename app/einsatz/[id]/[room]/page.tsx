@@ -13,7 +13,6 @@ import WorkspaceChat from '@/app/workspace-chat';
 import IncidentStage from '@/app/incident-stage';
 import Notifications from "../../../notifications";
 import Board from "../../../board";
-import Meeting from "../../../meeting";
 import { demo } from "../../../../lib/store";
 import { Header, Notice } from '../../../shell';
 
@@ -37,7 +36,7 @@ export default async function Workspace({ params, searchParams }: {
       <div className="eyebrow">Incident</div><h1>{incident.title}</h1>
     </section>
     <nav className="workspaceShortcuts" aria-label="Incident sections">
-      <a href="#rooms" >Rooms</a><a href="#situation">Stage and call</a><a href="#chat">Room chat</a>
+      <a href="#chat">Room chat</a><a href="#situation">Stage and call</a><a href="#rooms">Rooms</a>
     </nav>
     <div className="workspaceGrid">
       <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
@@ -59,7 +58,9 @@ export default async function Workspace({ params, searchParams }: {
         <Link href={roomPath(id, room) + "/wissen"} className="iconLabel"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
-        <IncidentStage key={room} board={<Board key={"board-" + room} path={roomPath(id, room)} />} meeting={<Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />} />
+        <IncidentStage key={room} path={roomPath(id, room)}
+          enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)}
+          board={<Board path={roomPath(id, room)} />} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
       <WorkspaceChat key={room} path={roomPath(id, room)} demo={demo} />

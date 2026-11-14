@@ -8,7 +8,9 @@ import { useState } from 'react';
 
 const Media = dynamic(() => import('./media'), { ssr: false });
 
-export default function Meeting({ path, enabled }: { path: string; enabled: boolean }) {
+export default function Meeting({ path, enabled, showShare, onShareChange }: {
+  path: string; enabled: boolean; showShare: boolean; onShareChange: (sharing: boolean) => void;
+}) {
   const [access, setAccess] = useState<{ url: string; token: string }>();
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +33,7 @@ export default function Meeting({ path, enabled }: { path: string; enabled: bool
   return <section className="roomForm" data-meeting-active={Boolean(access) || pending}>
     <h3 className="iconLabel"><Video className="navIcon" aria-hidden="true" />Meeting</h3>
     {!enabled ? <p className="muted">Meetings are not configured.</p>
-      : access ? <Media {...access} connected={() => setConnected(true)} leave={() => { setConnected(false); setAccess(undefined); }} fail={() => {
+      : access ? <Media {...access} showShare={showShare} onShareChange={onShareChange} connected={() => setConnected(true)} leave={() => { setConnected(false); setAccess(undefined); }} fail={() => {
         setConnected(false);
         setAccess(undefined);
         setError('Could not connect to the meeting service.');

@@ -185,3 +185,9 @@ nav a span{color:var(--accent)}
   .workspaceGrid > [id] { scroll-margin-top: 4rem; }
   .converseFrame { height: max(280px, 65dvh); }
 }
+
+@media (max-width: 580px) {
+  .workspaceGrid > .chat { grid-row: 1; }
+  .workspaceGrid > .situation { grid-row: 2; }
+  .workspaceGrid > .rooms { grid-row: 3; }
+}
