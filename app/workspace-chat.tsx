@@ -47,7 +47,7 @@ function EmbeddedChat({ bootstrap }: { bootstrap: Bootstrap }) {
             theme: 'default', dark_theme: 'dracula',
             authentication: 'login', auto_login: true, jid: credentials.jid, password: credentials.password,
             websocket_url: credentials.websocketUrl, discover_connection_methods: false,
-            auto_join_rooms: [{ jid: credentials.roomJid, nick: credentials.nick }],
+            auto_join_rooms: [credentials.roomJid], nickname: credentials.nick,
             persistent_store: 'sessionStorage', clear_cache_on_logout: true,
             visible_toolbar_buttons: { call: false },
             allow_logout: false, allow_registration: false, auto_reconnect: true, loglevel: 'error',
