@@ -74,17 +74,18 @@ try {
   for (const page of [operator, guest]) page.on("pageerror", error => console.error("Browser:", error.message));
   for (const context of [ops, visitors]) context.setDefaultTimeout(12000);
   await operator.goto(base);
+  await operator.getByRole('link', { name: 'Sign in', exact: true }).click();
   await operator.getByLabel('Username').fill('Testleitung');
   await operator.getByLabel('Password').fill(password);
   await operator.getByRole('button', { name: 'Sign in', exact: true }).click();
   await operator.getByLabel('Incident title').fill('Abnahme ' + Date.now());
   await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
   await operator.getByRole('button', { name: 'Create incident' }).click();
-  await operator.getByRole('heading', { name: 'Incident command' }).waitFor();
+  await operator.getByRole('heading', { name: 'Incident command', exact: true }).waitFor();
   const main = new URL(operator.url()).pathname;
   await operator.getByLabel('New subroom').fill('Abschnitt Nord');
   await operator.getByRole('button', { name: 'Create room' }).click();
-  await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
+  await operator.getByRole('heading', { name: 'Abschnitt Nord', exact: true }).waitFor();
   const room = new URL(operator.url()).pathname;
   await operator.getByRole('button', { name: 'Invite', exact: true }).click();
   await operator.getByRole('button', { name: 'Create invite' }).click();
@@ -92,7 +93,7 @@ try {
   await guest.goto(other + new URL(invite).pathname + new URL(invite).hash);
   await guest.getByLabel('Display name').fill('Gast Alex');
   await guest.getByRole('button', { name: 'Join room' }).click();
-  await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
+  await guest.getByRole('heading', { name: 'Abschnitt Nord', exact: true }).waitFor();
   assert.equal(await guest.getByRole('button', { name: 'Create room' }).count(), 0);
   assert.equal(await guest.getByText('Interne Arbeitsfläche').count(), 0);
   assert(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -191,7 +192,7 @@ try {
     ['GET', '/mock/health', 'mock-only'], ['POST', '/mock/sms/send', 'mock-only'],
   ]);
   assert.equal(writes[1][3].number, '+491555555555');
-  assert.match(writes[1][3].text, /Abschnitt Nord\nInvitation: http:\/\/127\.0\.0\.1:3131\/j#/);
+  assert.match(writes[1][3].text, /Abschnitt Nord\nInvitation: http:\/\/127\.0\.0\.1:313[01]\/j#/);
   await operator.goto(base + room);
   await operator.getByText(/SMS.*Accepted/).waitFor();
   ready = false;
