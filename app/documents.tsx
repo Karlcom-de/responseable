@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import RoomAssistant from './room-assistant';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Document } from '@/lib/documents';
@@ -124,6 +125,7 @@ export default function Documents({ path, slug, room }: { path: string; slug?: s
           </li>)}</ul> : <Empty><EmptyDescription>{search ? 'No matching documents.' : 'No documents are visible in this room.'}</EmptyDescription></Empty>}
           {data?.canEdit && <div><Button onClick={() => setDraft(empty)}>New document</Button></div>}
         </>}
+        {data?.canEdit && !draft && <RoomAssistant key={document?.revision ?? 0} path={path} slug={slug} />}
       </CardContent>
     </Card>
   </>;

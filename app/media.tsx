@@ -18,9 +18,9 @@ function Conference() {
   </>;
 }
 
-export default function Media({ url, token, leave, fail }: { url: string; token: string; leave: () => void; fail: () => void }) {
+export default function Media({ url, token, connected, leave, fail }: { url: string; token: string; connected: () => void; leave: () => void; fail: () => void }) {
   return <div className="media" data-lk-theme="default">
-    <LiveKitRoom serverUrl={url} token={token} connect audio={false} video={false} onDisconnected={leave} onError={fail}>
+    <LiveKitRoom serverUrl={url} token={token} connect audio={false} video={false} onConnected={connected} onDisconnected={leave} onError={fail}>
       <Conference />
     </LiveKitRoom>
   </div>;
