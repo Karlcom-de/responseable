@@ -16,7 +16,7 @@ const roles = ['admin', 'coordinator', 'responder'] as const;
 const labels = { admin: 'Administrator', coordinator: 'Coordinator', responder: 'Responder' };
 type Account = {
   id: string; login: string; displayName: string; role: typeof roles[number];
-  active: boolean; incidentIds?: string[];
+  active: boolean; requiresPasswordChange: boolean; mfaEnrolled: boolean; incidentIds?: string[];
 };
 type Incident = { id: string; title: string };
 
@@ -126,6 +126,8 @@ export function AccountList({ currentId }: { currentId: string }) {
           <p className="muted [overflow-wrap:anywhere]">{account.login} · {labels[account.role]} · {account.active ? 'Active' : 'Deactivated'}{self ? ' · You' : ''}</p>
         </CardHeader>
         <CardContent className="grid gap-3">
+          <p className="muted">{account.requiresPasswordChange ? 'Password change pending' :
+            account.mfaEnrolled ? 'Authenticator enrolled' : 'Authenticator setup pending'}</p>
           <p>{account.role === 'admin' ? 'All incidents' :
             incidents.filter(incident => account.incidentIds?.includes(incident.id)).map(incident => incident.title).join(', ') || 'No incident assignments'}</p>
           {!self && <div className="flex flex-wrap gap-2">

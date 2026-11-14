@@ -24,6 +24,9 @@ export function SignIn({ identifyPasskey = false }: { identifyPasskey?: boolean 
   const [name, setName] = useState('');
   const [status, setStatus] = useState('');
   useEffect(() => setSupportsPasskeys(browserSupportsWebAuthn()), []);
+  useEffect(() => {
+    if (step === 'password' && status) document.getElementById('auth-password')?.focus();
+  }, [step, status]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
