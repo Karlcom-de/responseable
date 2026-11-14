@@ -36,7 +36,7 @@ export default async function Workspace({ params, searchParams }: {
       <div className="eyebrow">Incident</div><h1>{incident.title}</h1>
     </section>
     <nav className="workspaceShortcuts" aria-label="Incident sections">
-      <a href="#chat">Room chat</a><a href="#situation">Stage and call</a><a href="#rooms">Rooms</a>
+      <a href="#chat">Room chat</a><a href="#situation">Stage</a><a href="#room-meeting" className="mobileMeetingLink">Meeting<span className="mobileMeetingStatus"> · In call</span></a><a href="#rooms">Rooms</a>
     </nav>
     <div className="workspaceGrid">
       <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>

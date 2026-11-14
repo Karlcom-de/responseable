@@ -30,7 +30,7 @@ export default function Meeting({ path, enabled, showShare, onShareChange }: {
     }
   }
 
-  return <section className="roomForm" data-meeting-active={Boolean(access) || pending}>
+  return <section className="roomForm" id="room-meeting" data-meeting-connected={connected} data-meeting-active={Boolean(access) || pending}>
     <h3 className="iconLabel"><Video className="navIcon" aria-hidden="true" />Meeting</h3>
     {!enabled ? <p className="muted">Meetings are not configured.</p>
       : access ? <Media {...access} showShare={showShare} onShareChange={onShareChange} connected={() => setConnected(true)} leave={() => { setConnected(false); setAccess(undefined); }} fail={() => {

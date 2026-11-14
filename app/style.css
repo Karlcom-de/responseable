@@ -198,3 +198,13 @@ nav a span{color:var(--accent)}
   .workspaceGrid > .situation { grid-row: 2; }
   .workspaceGrid > .rooms { grid-row: 3; }
 }
+
+.mobileMeetingStatus { display: none; }
+.workspace:has([data-meeting-connected="true"]) .mobileMeetingStatus { display: inline; }
+#room-meeting { scroll-margin-top: 7rem; }
+@media (max-width: 580px) {
+  .workspaceShortcuts a { align-items: center; min-height: 2.5rem; padding: .35rem .55rem; font-size: .8125rem; }
+  .workspaceShortcuts .mobileMeetingLink { font-weight: 650; }
+  .incidentStage [data-slot="button"] { white-space: normal; }
+  .mediaControls button { min-height: 2.5rem; }
+}

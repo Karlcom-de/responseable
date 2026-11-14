@@ -72,7 +72,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
           await win.converse.initialize(win.JSON.parse(JSON.stringify({
             assets_path: assets.href, view_mode: 'embedded', singleton: true, i18n: 'en',
             theme: 'default', dark_theme: 'dracula',
-            authentication: 'login', auto_login: true, jid: credentials.jid, password: credentials.password,
+            authentication: 'login', auto_login: true, auto_focus: false, jid: credentials.jid, password: credentials.password,
             websocket_url: credentials.websocketUrl, discover_connection_methods: false,
             auto_join_rooms: [{ jid: credentials.roomJid, nick: credentials.nick, name: credentials.roomTitle || roomTitle }],
             persistent_store: 'sessionStorage', clear_cache_on_logout: true,
