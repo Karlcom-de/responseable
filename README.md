@@ -19,6 +19,8 @@ The [GitHub mirror](https://github.com/Karlcom-de/responseable) can replace the 
 
 While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/ready`. With local npm dependencies and Playwright Chromium installed, run the browser smoke with `node scripts/exercise-smoke.mjs`. Video, phone alerts and external guest access are outside the default exercise. Use a private HTTPS hostname for remote guest sharing and production passkeys. See [Kubernetes deployment](docs/kubernetes.md) and [staging smoke tests](docs/staging.md) for those environments.
 
+For a local two-browser WebRTC exercise, run `./scripts/kubernetes-exercise-media.sh` instead of the launcher above. This starts a pinned LiveKit in the same test namespace and forwards localhost TCP 7880 (signaling) and 7881 (ICE) independently. Open two separate browser profiles on the same workstation and redeem an invite in the second. Keep the launcher running and leave ports 3190, 7880 and 7881 free. A browser on a different machine needs private HTTPS/WSS and a reachable ICE or TURN path. This media exercise uses the local room chat. The separately configured [XMPP pilot](deploy/xmpp/README.md) uses Converse and durable MAM.
+
 ## What you can do
 
 - Open an incident with a command room and add workstream rooms as the response evolves.
