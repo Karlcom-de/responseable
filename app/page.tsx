@@ -42,7 +42,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
     WHERE $1 OR EXISTS (SELECT 1 FROM incident_accounts WHERE account_id=$2 AND incident_id=incidents.id)
     ORDER BY created DESC
   `, [demo || !accountsEnabled() || current.role === "admin", current.accountId]);
-  return <><Header name={current.name} /><main className="overview">
+  return <><Header name={current.name} admin={current.role === "admin"} /><main className="overview">
     <div className="eyebrow">Response workspace</div><h1>Incident overview</h1>
     <div className="overviewGrid">
       <Card className="panel" role="region"><h2>Incidents <span className="count">{incidents.length}</span></h2>

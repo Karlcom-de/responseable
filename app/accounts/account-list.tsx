@@ -78,13 +78,23 @@ async function request(path = '', method = 'GET', body?: unknown) {
   return response.status === 204 ? undefined : response.json();
 }
 
-export function AccountList({ incidents, currentId }: { incidents: Incident[]; currentId: string }) {
+export function AccountList({ currentId }: { currentId: string }) {
   const [accounts, setAccounts] = useState<Account[]>();
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   async function refresh() {
-    const { accounts } = await request();
-    setAccounts(accounts);
+    const { accounts, incidents, assignments } = await request() as {
+      accounts: Account[]; incidents: Incident[]; assignments: { accountId: string; incidentId: string }[];
+    };
+    const byAccount = new Map<string, string[]>();
+    for (const { accountId, incidentId } of assignments) {
+      const ids = byAccount.get(accountId) ?? [];
+      ids.push(incidentId);
+      byAccount.set(accountId, ids);
+    }
+    setAccounts(accounts.map(account => ({ ...account, incidentIds: byAccount.get(account.id) })));
+    setIncidents(incidents);
   }
   useEffect(() => { void refresh().catch(() => setError('Could not load accounts.')); }, []);
 
@@ -102,7 +112,7 @@ export function AccountList({ incidents, currentId }: { incidents: Incident[]; c
       <label>Username<Input name="login" autoComplete="off" required maxLength={80} /></label>
       <label>Display name<Input name="displayName" required maxLength={80} /></label>
       <RoleField value="responder" />
-      <label>Temporary password<Input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={256} /></label>
+      <label>Temporary password<Input name="password" type="password" autoComplete="new-password" required minLength={16} maxLength={256} /></label>
     </AccountDialog></div>}
     <p role="status">{status || (!accounts && !error ? 'Loading accounts…' : '')}</p>
     {error && <Notice>{error}</Notice>}
@@ -139,7 +149,7 @@ export function AccountList({ incidents, currentId }: { incidents: Incident[]; c
             <AccountDialog title="Reset password" submit="Set temporary password"
               description={`Set a temporary password for ${account.displayName}. Share it through a secure channel.`}
               save={form => update(path, 'PATCH', { password: form.get('password') }, 'Temporary password set.')}>
-              <label>Temporary password<Input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={256} /></label>
+              <label>Temporary password<Input name="password" type="password" autoComplete="new-password" required minLength={16} maxLength={256} /></label>
             </AccountDialog>
           </div>}
         </CardContent>
