@@ -1,23 +1,20 @@
-import { BookOpen, DoorOpen, GitBranch, MessageSquare } from 'lucide-react';
+import { BookOpen, DoorOpen, GitBranch } from 'lucide-react';
 import RoomInvites from '@/app/room-invites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { query as sql, roomInIncident, roomPath, session, type Incident, type Message, type Room } from '../../../../lib/store';
-import { createRoom, sendMessage } from '../../../actions';
-import Refresh from '../../../refresh';
+import { query as sql, roomInIncident, roomPath, session, type Incident, type Room } from '../../../../lib/store';
+import { createRoom } from '../../../actions';
+import RoomChat from '../../../room-chat';
 import Notifications from "../../../notifications";
 import Board from "../../../board";
 import Meeting from "../../../meeting";
 import { demo } from "../../../../lib/store";
 import { Header, Notice } from '../../../shell';
 
-const clock = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
 
 export default async function Workspace({ params, searchParams }: {
   params: Promise<{ id: string; room: string }>;
@@ -31,7 +28,6 @@ export default async function Workspace({ params, searchParams }: {
   if (!active) notFound();
   const incident = (await sql<Incident>('SELECT id, title, summary FROM incidents WHERE id = $1', [id]))[0];
   const rooms = guest ? [active] : await sql<Room>('SELECT id, name, main FROM rooms WHERE incident = $1 ORDER BY main DESC, name, id', [id]);
-  const messages = await sql<Message>('SELECT id, name, guest, body, created FROM messages WHERE room = $1 ORDER BY id DESC LIMIT 100', [room]);
   return <><Header name={current.name} guest={guest} /><main className="workspace">
     <section className="incident">
       {!guest && <Link className="back" href="/">← Incident overview</Link>}
@@ -63,20 +59,7 @@ export default async function Workspace({ params, searchParams }: {
         <Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
-      <Card className="panel chat" id="chat" role="region"><Refresh /><h2 className="iconLabel"><MessageSquare className="navIcon" aria-hidden="true" />Room chat</h2>
-        <ScrollArea className="chatScroll"><div className="messages" role="log" aria-label="Chat history">
-          {messages.length ? messages.map(message => <article key={message.id}>
-            <div className="messageMeta"><strong>{message.name}</strong>{message.guest === 1 && <span>Guest</span>}
-              <time dateTime={new Date(Number(message.created)).toISOString()}>{clock.format(Number(message.created))}</time></div>
-            <p>{message.body}</p>
-          </article>) : <p className="muted">No messages yet.</p>}
-        </div></ScrollArea>
-        <form className="stack composer" action={sendMessage.bind(null, id, room)}>
-          {query.fehler === 'nachricht' && <Notice>Enter a message.</Notice>}
-          <Field><FieldLabel htmlFor="room-message">Message</FieldLabel><InputGroup><InputGroupTextarea id="room-message" name="body" rows={2} required maxLength={2000} /></InputGroup></Field>
-          <Button type="submit">Send</Button>
-        </form>
-      </Card>
+      <RoomChat key={room} path={roomPath(id, room)} />
     </div>
   </main></>;
 }
