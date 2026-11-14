@@ -39,8 +39,8 @@ try {
   const mode = await db.query('SELECT demo FROM responseable_mode');
   if (mode.rows[0].demo !== demo) throw new Error('Demo- und Realbetrieb benötigen getrennte Datenbanken.');
   if (demo) await db.query(`
-    INSERT INTO incidents VALUES ('demo', 'Hochwasser Süd', 'Übungslage. Wasserstände beobachten und Rückmeldungen koordinieren.', 0) ON CONFLICT DO NOTHING;
-    INSERT INTO rooms VALUES ('demo-haupt', 'demo', 'Einsatzleitung', 1), ('demo-nord', 'demo', 'Abschnitt Nord', 0) ON CONFLICT DO NOTHING;
+    INSERT INTO incidents VALUES ('demo', 'Flood exercise', 'Exercise scenario. Monitor water levels and coordinate field reports.', 0) ON CONFLICT DO NOTHING;
+    INSERT INTO rooms VALUES ('demo-haupt', 'demo', 'Incident command', 1), ('demo-nord', 'demo', 'North sector', 0) ON CONFLICT DO NOTHING;
   `);
   await db.query('COMMIT');
 } finally {

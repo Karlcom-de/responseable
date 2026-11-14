@@ -74,35 +74,35 @@ try {
   for (const page of [operator, guest]) page.on("pageerror", error => console.error("Browser:", error.message));
   for (const context of [ops, visitors]) context.setDefaultTimeout(12000);
   await operator.goto(base);
-  await operator.getByLabel('Kennung').fill('Testleitung');
-  await operator.getByLabel('Passwort').fill(password);
-  await operator.getByRole('button', { name: 'Anmelden' }).click();
-  await operator.getByLabel('Einsatzbezeichnung').fill('Abnahme ' + Date.now());
-  await operator.getByLabel('Lagebeschreibung').fill('Interne Arbeitsfläche');
-  await operator.getByRole('button', { name: 'Einsatz anlegen' }).click();
-  await operator.getByRole('heading', { name: 'Einsatzleitung' }).waitFor();
+  await operator.getByLabel('Username').fill('Testleitung');
+  await operator.getByLabel('Password').fill(password);
+  await operator.getByRole('button', { name: 'Sign in' }).click();
+  await operator.getByLabel('Incident title').fill('Abnahme ' + Date.now());
+  await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
+  await operator.getByRole('button', { name: 'Create incident' }).click();
+  await operator.getByRole('heading', { name: 'Incident command' }).waitFor();
   const main = new URL(operator.url()).pathname;
-  await operator.getByLabel('Neuer Unterraum').fill('Abschnitt Nord');
-  await operator.getByRole('button', { name: 'Raum anlegen' }).click();
+  await operator.getByLabel('New subroom').fill('Abschnitt Nord');
+  await operator.getByRole('button', { name: 'Create room' }).click();
   await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
   const room = new URL(operator.url()).pathname;
-  await operator.getByRole('button', { name: 'Gästelink erstellen' }).click();
-  const invite = await operator.getByRole('link', { name: 'Gästelink öffnen' }).getAttribute('href');
+  await operator.getByRole('button', { name: 'Create guest link' }).click();
+  const invite = await operator.getByRole('link', { name: 'Open guest link' }).getAttribute('href');
   await guest.goto(other + invite);
-  await guest.getByLabel('Anzeigename').fill('Gast Alex');
-  await guest.getByRole('button', { name: 'Raum beitreten' }).click();
+  await guest.getByLabel('Display name').fill('Gast Alex');
+  await guest.getByRole('button', { name: 'Join room' }).click();
   await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
-  assert.equal(await guest.getByRole('button', { name: 'Raum anlegen' }).count(), 0);
+  assert.equal(await guest.getByRole('button', { name: 'Create room' }).count(), 0);
   assert.equal(await guest.getByText('Interne Arbeitsfläche').count(), 0);
   assert(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-  await guest.getByLabel('Nachricht').fill('Abschnitt meldet sich');
-  await guest.getByRole('button', { name: 'Senden' }).click();
+  await guest.getByLabel('Message').fill('Abschnitt meldet sich');
+  await guest.getByRole('button', { name: 'Send' }).click();
   await guest.getByText('Abschnitt meldet sich').waitFor();
   await operator.getByText('Abschnitt meldet sich').waitFor();
   await operator.goto(other + room);
   await operator.getByText('Abschnitt meldet sich').waitFor();
   await guest.goto(other + main);
-  await guest.getByRole('heading', { name: 'Seite nicht verfügbar' }).waitFor();
+  await guest.getByRole('heading', { name: 'Page unavailable' }).waitFor();
   await guest.goto(other + room);
   assert.equal((await visitors.request.get(other + main + '/board')).status(), 404);
   assert.equal((await visitors.request.post(other + main + '/meeting', { headers: { origin: other } })).status(), 404);
@@ -132,7 +132,7 @@ try {
   assert.equal(edition.document.revision, 2);
 
   await Promise.all([operator, guest].map(async page => {
-    await page.getByRole('button', { name: 'Lagebild öffnen' }).click();
+    await page.getByRole('button', { name: 'Open whiteboard' }).click();
     await page.locator('canvas.interactive').waitFor();
     await page.waitForTimeout(1200);
     await page.locator(".canvas").scrollIntoViewIfNeeded();
@@ -158,17 +158,17 @@ try {
   assert.deepEqual((await (await ops.request.get(base + main + '/board')).json()).elements, []);
 
   if (env.LIVEKIT_URL) {
-    await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Meeting beitreten' }).click()));
-    await operator.getByRole('button', { name: 'Kamera' }).click();
+    await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Join meeting' }).click()));
+    await operator.getByRole('button', { name: 'Camera' }).click();
     await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2));
     await guest.getByText('Testleitung', { exact: true }).waitFor();
-    await guest.getByRole('button', { name: 'Verlassen' }).click();
-    await operator.getByRole('button', { name: 'Verlassen' }).click();
+    await guest.getByRole('button', { name: 'Leave' }).click();
+    await operator.getByRole('button', { name: 'Leave' }).click();
   }
 
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555555');
-  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-  const confirm = operator.getByRole('button', { name: 'SMS senden' });
+  await operator.getByLabel('International phone number').fill('+491555555555');
+  await operator.getByRole('button', { name: 'Preview' }).click();
+  const confirm = operator.getByRole('button', { name: 'Send SMS' });
   await confirm.waitFor();
   await operator.route('**/einsatz/**', async route => {
     const request = route.request();
@@ -183,7 +183,7 @@ try {
     await route.fulfill({ response: results[1] });
   });
   await confirm.click();
-  await operator.getByText(/SMS.*Angenommen/).waitFor();
+  await operator.getByText(/SMS.*Accepted/).waitFor();
   await operator.unroute('**/einsatz/**');
   assert.deepEqual(writes.map(([method, path, key]) => [method, path, key]), [
     ['GET', '/mock/health', 'mock-only'], ['POST', '/mock/sms/send', 'mock-only'],
@@ -191,24 +191,24 @@ try {
   assert.equal(writes[1][3].number, '+491555555555');
   assert.match(writes[1][3].text, /Abschnitt Nord\nEinladung: http:\/\/127\.0\.0\.1:3131\/einladung\//);
   await operator.goto(base + room);
-  await operator.getByText(/SMS.*Angenommen/).waitFor();
+  await operator.getByText(/SMS.*Accepted/).waitFor();
   ready = false;
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555555');
-  await operator.getByLabel('Aktion').selectOption('android');
-  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-  await operator.getByRole('button', { name: 'Anruf auslösen' }).click();
-  await operator.getByText(/Über Android anrufen.*Abgelehnt/).waitFor();
+  await operator.getByLabel('International phone number').fill('+491555555555');
+  await operator.getByLabel('Action').selectOption('android');
+  await operator.getByRole('button', { name: 'Preview' }).click();
+  await operator.getByRole('button', { name: 'Place call' }).click();
+  await operator.getByText(/Call via Android.*Rejected/).waitFor();
   assert.equal(writes.at(-1)[1], '/mock/health');
   assert.equal(writes.length, 3);
 
   ready = true;
-  for (const [status, label] of [[200, 'Angenommen'], [503, 'Unklar']]) {
+  for (const [status, label] of [[200, 'Accepted'], [503, 'Unknown']]) {
     callStatus = status;
-    await operator.getByLabel('Internationale Rufnummer').fill('+491555555556');
-    await operator.getByLabel('Aktion').selectOption('android');
-    await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-    await operator.getByRole('button', { name: 'Anruf auslösen' }).click();
-    await operator.getByText('Über Android anrufen · +491555555556 · ' + label + ' · Android', { exact: true }).waitFor();
+    await operator.getByLabel('International phone number').fill('+491555555556');
+    await operator.getByLabel('Action').selectOption('android');
+    await operator.getByRole('button', { name: 'Preview' }).click();
+    await operator.getByRole('button', { name: 'Place call' }).click();
+    await operator.getByText('Call via Android · +491555555556 · ' + label + ' · Android', { exact: true }).waitFor();
     assert.deepEqual(writes.slice(-2), [
       ['GET', '/mock/health', 'mock-only', ''],
       ['POST', '/mock/call/outgoing', 'mock-only', { number: '+491555555556' }],
@@ -223,7 +223,7 @@ try {
     await database.end();
   }
   await guest.goto(other + invite);
-  await guest.getByRole('heading', { name: 'Seite nicht verfügbar' }).waitFor();
+  await guest.getByRole('heading', { name: 'Page unavailable' }).waitFor();
   await operator.goto(base + room);
   const beforeStop = await (await ops.request.get(base + room + '/board')).json();
   const stopped = new Promise(resolve => children[0].once('exit', resolve));
@@ -233,54 +233,54 @@ try {
   await operator.goto(other + room);
   await operator.getByText('Abschnitt meldet sich').waitFor();
   assert.deepEqual(await (await ops.request.get(other + room + '/board')).json(), beforeStop);
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555557');
-  await operator.getByLabel('Aktion').selectOption('sms');
-  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-  await operator.getByRole('button', { name: 'SMS senden' }).waitFor();
+  await operator.getByLabel('International phone number').fill('+491555555557');
+  await operator.getByLabel('Action').selectOption('sms');
+  await operator.getByRole('button', { name: 'Preview' }).click();
+  await operator.getByRole('button', { name: 'Send SMS' }).waitFor();
   const staleDraft = new URL(operator.url()).pathname + new URL(operator.url()).search;
   await start(base, { SMS_PROVIDER: 'webhook', CALL_PROVIDER: 'webhook' });
   await operator.goto(base + staleDraft);
-  await operator.getByRole('button', { name: 'SMS senden' }).click();
-  await operator.getByRole('alert').filter({ hasText: 'Dienstkonfiguration' }).waitFor();
+  await operator.getByRole('button', { name: 'Send SMS' }).click();
+  await operator.getByRole('alert').filter({ hasText: 'provider configuration' }).waitFor();
   assert.equal(writes.length, 7);
 
   await operator.getByRole('option', { name: 'SMS · Webhook' }).waitFor({ state: 'attached' });
-  await operator.getByRole('option', { name: 'Sprachalarm abspielen · Webhook' }).waitFor({ state: 'attached' });
+  await operator.getByRole('option', { name: 'Play voice alert · Webhook' }).waitFor({ state: 'attached' });
   await operator.goto(base + room);
-  await operator.getByLabel('Internationale Rufnummer').fill('555');
+  await operator.getByLabel('International phone number').fill('555');
   await Promise.all([
     operator.waitForResponse(response => response.request().method() === 'POST'),
-    operator.getByRole('button', { name: 'Vorschau anzeigen' }).click(),
+    operator.getByRole('button', { name: 'Preview' }).click(),
   ]);
   await operator.waitForURL(url => url.searchParams.get('fehler') === 'alarmierung');
-  assert.equal(await operator.getByRole('button', { name: 'SMS senden' }).count(), 0);
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555557');
-  await operator.getByLabel('Aktion').selectOption('sms');
-  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-  await operator.getByRole('button', { name: 'SMS senden' }).click();
-  await operator.getByText(/SMS.*555557.*Angenommen/).waitFor();
+  assert.equal(await operator.getByRole('button', { name: 'Send SMS' }).count(), 0);
+  await operator.getByLabel('International phone number').fill('+491555555557');
+  await operator.getByLabel('Action').selectOption('sms');
+  await operator.getByRole('button', { name: 'Preview' }).click();
+  await operator.getByRole('button', { name: 'Send SMS' }).click();
+  await operator.getByText(/SMS.*555557.*Accepted/).waitFor();
   const [verb, endpoint, bearer, sent] = writes.at(-1);
   assert.deepEqual([verb, endpoint, bearer, sent.capability], ['POST', '/bridge', 'Bearer bridge-only', 'sms']);
   assert.match(sent.requestId, /^[a-f0-9-]{36}$/);
   const invitationUrl = sent.text.split('Einladung: ')[1];
   await guest.goto(invitationUrl);
-  await guest.getByRole('button', { name: 'Raum beitreten' }).waitFor();
+  await guest.getByRole('button', { name: 'Join room' }).waitFor();
 
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555558');
-  await operator.getByLabel('Aktion').selectOption('voice');
+  await operator.getByLabel('International phone number').fill('+491555555558');
+  await operator.getByLabel('Action').selectOption('voice');
   await Promise.all([
     operator.waitForResponse(response => response.request().method() === 'POST'),
-    operator.getByRole('button', { name: 'Vorschau anzeigen' }).click(),
+    operator.getByRole('button', { name: 'Preview' }).click(),
   ]);
   await operator.waitForURL(url => url.searchParams.get('fehler') === 'alarmierung');
-  assert.equal(await operator.getByRole('button', { name: 'Sprachalarm auslösen' }).count(), 0);
-  await operator.getByLabel('Internationale Rufnummer').fill('+491555555558');
-  await operator.getByLabel('Aktion').selectOption('voice');
-  await operator.getByLabel('Ansage für den Sprachalarm').fill('Bitte zur Einsatzstelle kommen.');
-  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  assert.equal(await operator.getByRole('button', { name: 'Send voice alert' }).count(), 0);
+  await operator.getByLabel('International phone number').fill('+491555555558');
+  await operator.getByLabel('Action').selectOption('voice');
+  await operator.getByLabel('Voice alert message').fill('Bitte zur Einsatzstelle kommen.');
+  await operator.getByRole('button', { name: 'Preview' }).click();
   await operator.getByText('Bitte zur Einsatzstelle kommen.').waitFor();
-  await operator.getByRole('button', { name: 'Sprachalarm auslösen' }).click();
-  await operator.getByText('Sprachalarm abspielen · +491555555558 · Angenommen · Webhook', { exact: true }).waitFor();
+  await operator.getByRole('button', { name: 'Send voice alert' }).click();
+  await operator.getByText('Play voice alert · +491555555558 · Accepted · Webhook', { exact: true }).waitFor();
   const [voiceVerb, voiceEndpoint, voiceBearer, voice] = writes.at(-1);
   assert.deepEqual([voiceVerb, voiceEndpoint, voiceBearer, voice.capability, voice.number, voice.text],
     ['POST', '/bridge', 'Bearer bridge-only', 'voice', '+491555555558', 'Bitte zur Einsatzstelle kommen.']);

@@ -18,34 +18,34 @@ try {
   for (const page of [operator, guest]) page.on("pageerror", error => console.error("Browser:", error.message));
   for (const context of [ops, visitors]) context.setDefaultTimeout(12000);
   await operator.goto(base);
-  await operator.getByLabel('Kennung').fill(process.env.SMOKE_OPERATOR);
-  await operator.getByLabel('Passwort').fill(password);
-  await operator.getByRole('button', { name: 'Anmelden' }).click();
-  await operator.getByLabel('Einsatzbezeichnung').fill('Staging ' + Date.now());
-  await operator.getByLabel('Lagebeschreibung').fill('Interne Arbeitsfläche');
-  await operator.getByRole('button', { name: 'Einsatz anlegen' }).click();
-  await operator.getByRole('heading', { name: 'Einsatzleitung' }).waitFor();
+  await operator.getByLabel('Username').fill(process.env.SMOKE_OPERATOR);
+  await operator.getByLabel('Password').fill(password);
+  await operator.getByRole('button', { name: 'Sign in' }).click();
+  await operator.getByLabel('Incident title').fill('Staging ' + Date.now());
+  await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
+  await operator.getByRole('button', { name: 'Create incident' }).click();
+  await operator.getByRole('heading', { name: 'Incident command' }).waitFor();
   const main = new URL(operator.url()).pathname;
-  await operator.getByLabel('Neuer Unterraum').fill('Abschnitt Nord');
-  await operator.getByRole('button', { name: 'Raum anlegen' }).click();
+  await operator.getByLabel('New subroom').fill('Abschnitt Nord');
+  await operator.getByRole('button', { name: 'Create room' }).click();
   await operator.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
   const room = new URL(operator.url()).pathname;
-  await operator.getByRole('button', { name: 'Gästelink erstellen' }).click();
-  const invite = await operator.getByRole('link', { name: 'Gästelink öffnen' }).getAttribute('href');
+  await operator.getByRole('button', { name: 'Create guest link' }).click();
+  const invite = await operator.getByRole('link', { name: 'Open guest link' }).getAttribute('href');
   await guest.goto(base + invite);
-  await guest.getByLabel('Anzeigename').fill('Gast Alex');
-  await guest.getByRole('button', { name: 'Raum beitreten' }).click();
+  await guest.getByLabel('Display name').fill('Gast Alex');
+  await guest.getByRole('button', { name: 'Join room' }).click();
   await guest.getByRole('heading', { name: 'Abschnitt Nord' }).waitFor();
-  assert.equal(await guest.getByRole('button', { name: 'Raum anlegen' }).count(), 0);
+  assert.equal(await guest.getByRole('button', { name: 'Create room' }).count(), 0);
   assert.equal(await guest.getByText('Interne Arbeitsfläche').count(), 0);
   assert(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-  await guest.getByLabel('Nachricht').fill('Abschnitt meldet sich');
-  await guest.getByRole('button', { name: 'Senden' }).click();
+  await guest.getByLabel('Message').fill('Abschnitt meldet sich');
+  await guest.getByRole('button', { name: 'Send' }).click();
   await guest.getByText('Abschnitt meldet sich').waitFor();
   await operator.getByText('Abschnitt meldet sich').waitFor();
 
   assert.equal((await visitors.request.get(base + main + '/board')).status(), 404);
-  await operator.getByRole('button', { name: 'Lagebild öffnen' }).click();
+  await operator.getByRole('button', { name: 'Open whiteboard' }).click();
   const canvas = operator.locator('canvas.interactive');
   await canvas.scrollIntoViewIfNeeded();
   await operator.waitForTimeout(1200);
@@ -64,23 +64,23 @@ try {
   }
   if (process.env.SMOKE_SYNTHETIC_PROVIDERS === '1') {
     for (const [method, suffix, status, provider] of [
-      ['sms', '97', 'Angenommen', 'Android'],
-      ['voice', '96', 'Angenommen', 'Webhook'],
-      ['voice', '98', 'Unklar', 'Webhook'],
+      ['sms', '97', 'Accepted', 'Android'],
+      ['voice', '96', 'Accepted', 'Webhook'],
+      ['voice', '98', 'Unknown', 'Webhook'],
     ]) {
       const number = '+120255501' + suffix;
-      await operator.getByLabel('Internationale Rufnummer').fill(number);
-      await operator.getByLabel('Aktion').selectOption(method);
-      if (method === 'voice') await operator.getByLabel('Ansage für den Sprachalarm').fill('Synthetischer Staging-Test');
-      await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
-      await operator.getByRole('button', { name: method === 'sms' ? 'SMS senden' : 'Sprachalarm auslösen' }).click();
-      const label = method === 'sms' ? 'SMS' : 'Sprachalarm abspielen';
+      await operator.getByLabel('International phone number').fill(number);
+      await operator.getByLabel('Action').selectOption(method);
+      if (method === 'voice') await operator.getByLabel('Voice alert message').fill('Synthetischer Staging-Test');
+      await operator.getByRole('button', { name: 'Preview' }).click();
+      await operator.getByRole('button', { name: method === 'sms' ? 'Send SMS' : 'Send voice alert' }).click();
+      const label = method === 'sms' ? 'SMS' : 'Play voice alert';
       await operator.getByText(`${label} · ${number} · ${status} · ${provider}`, { exact: true }).waitFor();
     }
   }
   console.log('Staging application and configured fixtures passed.');
-  await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Meeting beitreten' }).click()));
-  await operator.getByRole('button', { name: 'Kamera' }).click();
+  await Promise.all([operator, guest].map(page => page.getByRole('button', { name: 'Join meeting' }).click()));
+  await operator.getByRole('button', { name: 'Camera' }).click();
   await guest.waitForFunction(() => [...document.querySelectorAll('video')].some(video => video.videoWidth > 0 && video.readyState >= 2));
   console.log('Staging smoke passed.');
 } finally {

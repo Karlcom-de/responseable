@@ -7,13 +7,13 @@ const browser = await chromium.launch({ executablePath: process.env.TEST_CHROMIU
 try {
   const page = await browser.newPage();
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Übungsleitstelle öffnen' }).click();
-  await page.getByRole('heading', { name: 'Einsatzleitung' }).waitFor();
+  await page.getByRole('button', { name: 'Run the exercise' }).click();
+  await page.getByRole('heading', { name: 'Incident command' }).waitFor();
   const message = 'Exercise smoke ' + Date.now();
-  await page.getByLabel('Nachricht').fill(message);
-  await page.getByRole('button', { name: 'Senden' }).click();
+  await page.getByLabel('Message').fill(message);
+  await page.getByRole('button', { name: 'Send' }).click();
   await page.getByText(message, { exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Lagebild öffnen' }).click();
+  await page.getByRole('button', { name: 'Open whiteboard' }).click();
   const canvas = page.locator('canvas.interactive');
   await canvas.scrollIntoViewIfNeeded();
   const boardUrl = page.url() + '/board';

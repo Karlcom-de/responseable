@@ -29,7 +29,7 @@ export async function login(form: FormData) {
 
 export async function enterDemo() {
   if (!demo) notFound();
-  await startSession('Übungsleitung', null, Date.now() + 8 * 3600_000);
+  await startSession('Exercise lead', null, Date.now() + 8 * 3600_000);
   redirect(roomPath('demo', 'demo-haupt'));
 }
 
@@ -47,7 +47,7 @@ export async function createIncident(form: FormData) {
   const room = newId();
   await query(`
     WITH created AS (INSERT INTO incidents VALUES ($1, $2, $3, $4) RETURNING id)
-    INSERT INTO rooms SELECT $5, id, 'Einsatzleitung', 1 FROM created
+    INSERT INTO rooms SELECT $5, id, 'Incident command', 1 FROM created
   `, [incident, title, summary, Date.now(), room]);
   redirect(roomPath(incident, room));
 }

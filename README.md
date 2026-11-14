@@ -4,7 +4,7 @@
 
 ![ResponseAble exercise showing incident rooms, a situation brief, and room chat](docs/responseable.webp)
 
-The application interface is in German. ResponseAble runs with PostgreSQL. LiveKit and phone-alert providers can be configured independently.
+ResponseAble runs with PostgreSQL. LiveKit and phone-alert providers can be configured independently.
 
 ## Try it on Kubernetes
 
@@ -15,7 +15,7 @@ git clone https://tea.karlcom.de/karl/responseable.git
 cd responseable && ./scripts/kubernetes-exercise.sh
 ```
 
-Open **http://127.0.0.1:3190** and select **Übungsleitstelle öffnen**. Try the seeded rooms, room chat and whiteboard. The script builds the checked-out commit in Kubernetes, migrates the local PostgreSQL sidecar, waits for readiness and forwards the loopback port. The exercise needs no local Docker, npm, secrets or storage class. Data survives page reloads and container restarts in the same pod. Pod replacement discards it. Re-running the same commit keeps the current pod.
+Open **http://127.0.0.1:3190** and select **Run the exercise**. Try the seeded rooms, room chat and whiteboard. The script builds the checked-out commit in Kubernetes, migrates the local PostgreSQL sidecar, waits for readiness and forwards the loopback port. The exercise needs no local Docker, npm, secrets or storage class. Data survives page reloads and container restarts in the same pod. Pod replacement discards it. Re-running the same commit keeps the current pod.
 
 The [GitHub mirror](https://github.com/Karlcom-de/responseable) can replace the Gitea clone URL. Stop forwarding with Ctrl+C. Remove the exercise with `kubectl delete namespace responseable-exercise`, or use the namespace selected via `RESPONSEABLE_EXERCISE_NAMESPACE`.
 
