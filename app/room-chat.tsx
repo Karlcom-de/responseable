@@ -14,6 +14,8 @@ const clock = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-dig
 export default function RoomChat({ path }: { path: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const pendingSubmit = useRef(false);
+  const submission = useRef<{ text: string; key: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const revision = useRef(0);
@@ -36,17 +38,20 @@ export default function RoomChat({ path }: { path: string }) {
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.trim() || sending) return;
+    if (!draft.trim() || pendingSubmit.current) return;
+    pendingSubmit.current = true;
+    if (submission.current?.text !== draft) submission.current = { text: draft, key: crypto.randomUUID() };
     setSending(true);
     setError('');
     try {
-      const response = await fetch(path + '/chat', { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: draft });
+      const response = await fetch(path + '/chat', { method: 'POST', headers: { 'Idempotency-Key': submission.current.key }, body: draft });
       if (!response.ok) throw Error();
+      submission.current = null;
       setDraft(current => current === draft ? '' : current);
       await refresh();
     } catch {
       setError('Could not confirm delivery. Refresh chat before sending again.');
-    } finally { setSending(false); }
+    } finally { pendingSubmit.current = false; setSending(false); }
   }
 
   return <Card className="panel chat" id="chat" role="region">
