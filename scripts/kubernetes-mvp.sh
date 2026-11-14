@@ -53,11 +53,34 @@ k apply -f deploy/kubernetes/exercise-media.yaml
 k rollout status deploy/responseable-exercise --timeout=8m
 k rollout status deploy/exercise-media --timeout=90s
 k exec deploy/responseable-exercise -c postgres -- psql -U exercise -d exercise -v ON_ERROR_STOP=1 -c "INSERT INTO xmpp_rooms VALUES ('demo-haupt','command'),('demo-nord','north');"
-for mapping in 7880:7880 7881:7881; do
-  k port-forward --address 127.0.0.1 deploy/exercise-media "$mapping" &
-  pids="$pids $!"
-done
-k port-forward --address 127.0.0.1 deploy/xmpp-pilot 7883:5443 &
-pids="$pids $!"
+start_forward() {
+  deployment=$1
+  mapping=$2
+  log="$work/forward-${mapping%%:*}.log"
+  kubectl -n "$namespace" port-forward --address 127.0.0.1 "deploy/$deployment" "$mapping" > "$log" 2>&1 &
+  pid=$!
+  pids="$pids $pid"
+  for attempt in $(seq 1 20); do
+    if ! kill -0 "$pid" 2>/dev/null; then cat "$log" >&2; exit 1; fi
+    if grep -q 'Forwarding from 127.0.0.1:' "$log"; then return; fi
+    sleep 1
+  done
+  cat "$log" >&2
+  echo "Timed out starting forward $mapping" >&2
+  exit 1
+}
+start_forward exercise-media 7880:7880
+start_forward exercise-media 7881:7881
+start_forward xmpp-pilot 7883:5443
+start_forward responseable-exercise 3190:3000
 echo 'Open http://127.0.0.1:3190 and select Run the exercise.'
-k port-forward --address 127.0.0.1 deploy/responseable-exercise 3190:3000
+while :; do
+  for pid in $pids; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      tail -n 10 "$work"/forward-*.log >&2
+      echo 'A port-forward stopped. The cluster resources remain in the test namespace.' >&2
+      exit 1
+    fi
+  done
+  sleep 1
+done
