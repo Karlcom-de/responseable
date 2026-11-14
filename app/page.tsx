@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import exercisePreview from '../docs/responseable.webp';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { query as sql, demo, roomPath, session, type Incident } from '../lib/store';
@@ -12,17 +14,20 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
   }
   if (!current) return <><Header /><main className="entry loginEntry">
     <div className="loginContent">
-    <div className="eyebrow">Digitale Leitstelle</div>
-    <h1>Einsatzkoordination</h1>
-    <p className="muted">Melden Sie sich an, um Einsätze und Kommunikationsräume zu verwalten.</p>
-    {demo ? <form action={enterDemo}><button>Übungsleitstelle öffnen</button></form> : <form className="stack" action={login}>
-      {query.fehler === 'anmeldung' && <Notice>Anmeldung fehlgeschlagen.</Notice>}
-      <label>Kennung<input name="name" autoComplete="username" required maxLength={80} /></label>
-      <label>Passwort<input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
-      <button>Anmelden</button>
-    </form>}
+      <div className="eyebrow">Self-hosted · Open Source</div>
+      <h1>Einsatzraum öffnen. Die richtigen Leute dazuholen.</h1>
+      <p className="muted">Wenn Chat oder Firmenlogin ausfallen, koordiniert ihr den Einsatz in einer separat betriebenen Instanz. Holt interne Teams und externe Beteiligte per Link dazu und haltet Entscheidungen am gemeinsamen Lagebild fest.</p>
+      {demo ? <form action={enterDemo}><button>Übungsleitstelle öffnen</button></form> : <form className="stack" action={login}>
+        {query.fehler === 'anmeldung' && <Notice>Anmeldung fehlgeschlagen.</Notice>}
+        <label>Kennung<input name="name" autoComplete="username" required maxLength={80} /></label>
+        <label>Passwort<input name="password" type="password" autoComplete="current-password" required maxLength={256} /></label>
+        <button>Anmelden</button>
+      </form>}
     </div>
-    <div className="loginArtwork" aria-hidden="true" />
+    <figure className="loginProof">
+      <Image src={exercisePreview} alt="Übungseinsatz mit zwei Einsatzräumen, Lagebeschreibung und Raumchat" unoptimized />
+      <figcaption>Übungslage · Einsatzleitung und Abschnitt Nord</figcaption>
+    </figure>
   </main></>;
 
   const incidents = await sql<Incident & { room: string }>(`

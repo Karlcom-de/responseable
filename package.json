@@ -1,7 +1,7 @@
 {
   "name": "responseable",
   "version": "0.1.0",
-  "description": "Self-hosted coordination for incidents and continuity exercises.",
+  "description": "Open-source incident war rooms for IT operations, security, and business continuity.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,9 +10,9 @@
     "migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "prebuild": "node scripts/board-assets.mjs",
     "predev": "node scripts/board-assets.mjs",
-    "test": "node scripts/acceptance.mjs"
+    "test": "node scripts/aws-notification-test.mjs && node scripts/acceptance.mjs"
   },
-  "keywords": [],
+  "keywords": ["incident-response", "incident-management", "business-continuity", "crisis-communications", "self-hosted", "livekit", "sms-alerting"],
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -20,6 +20,7 @@
   },
   "private": true,
   "dependencies": {
+    "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.1169.0",
     "@excalidraw/excalidraw": "^0.18.1",
     "@livekit/components-react": "^2.9.25",
     "@livekit/components-styles": "^1.2.0",

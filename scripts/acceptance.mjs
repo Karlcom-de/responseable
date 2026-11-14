@@ -19,6 +19,12 @@ const mock = createServer(async (request, response) => {
   for await (const chunk of request) chunks.push(chunk);
   const body = Buffer.concat(chunks).toString();
   writes.push([request.method, request.url, request.headers['x-android-key'], body && JSON.parse(body)]);
+  if (request.url === '/bridge') {
+    writes.at(-1)[2] = request.headers.authorization;
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ status: 'accepted' }));
+    return;
+  }
   if (request.url === '/mock/call/outgoing') response.statusCode = callStatus;
   response.setHeader('content-type', 'application/json');
   response.end(JSON.stringify({ ok: true, result: { androidReady: ready } }));
@@ -31,6 +37,9 @@ const env = {
   RESPONSEABLE_SECURE_COOKIE: 'false',
   ANDROID_GATEWAY_URL: `http://127.0.0.1:${mock.address().port}/mock`,
   ANDROID_GATEWAY_KEY: 'mock-only', LIVEKIT_SIP_TRUNK_ID: '',
+  SMS_PROVIDER: 'android', CALL_PROVIDER: 'android',
+  NOTIFICATION_WEBHOOK_URL: `http://127.0.0.1:${mock.address().port}/bridge`,
+  NOTIFICATION_WEBHOOK_TOKEN: 'bridge-only',
 };
 await cp('.next/static', '.next/standalone/.next/static', { recursive: true });
 await cp('public', '.next/standalone/public', { recursive: true });
@@ -39,10 +48,10 @@ let browser;
 try {
   const migration = spawn(process.execPath, ['scripts/migrate.mjs'], { env, stdio: 'inherit' });
   assert.equal(await new Promise(resolve => migration.once('exit', resolve)), 0);
-  for (const origin of [base, other]) {
+  async function start(origin, overrides = {}) {
     const { port } = new URL(origin);
     children.push(spawn(process.execPath, ['.next/standalone/server.js'], {
-      env: { ...env, PORT: port, HOSTNAME: '127.0.0.1', RESPONSEABLE_PUBLIC_ORIGIN: origin }, stdio: 'inherit',
+      env: { ...env, ...overrides, PORT: port, HOSTNAME: '127.0.0.1', RESPONSEABLE_PUBLIC_ORIGIN: origin }, stdio: 'inherit',
     }));
     for (let attempt = 0; ; attempt++) {
       if (await fetch(origin + '/health/ready').then(r => r.ok).catch(() => false)) break;
@@ -51,6 +60,8 @@ try {
     }
     assert.equal((await fetch(origin + '/health/live')).status, 200);
   }
+  await start(base);
+  await start(other);
 
   browser = await chromium.launch({
     executablePath: process.env.TEST_CHROMIUM,
@@ -174,7 +185,7 @@ try {
     await operator.getByLabel('Aktion').selectOption('android');
     await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
     await operator.getByRole('button', { name: 'Anruf auslösen' }).click();
-    await operator.getByText('Über Android anrufen · +491555555556 · ' + label, { exact: true }).waitFor();
+    await operator.getByText('Über Android anrufen · +491555555556 · ' + label + ' · Android', { exact: true }).waitFor();
     assert.deepEqual(writes.slice(-2), [
       ['GET', '/mock/health', 'mock-only', ''],
       ['POST', '/mock/call/outgoing', 'mock-only', { number: '+491555555556' }],
@@ -199,6 +210,58 @@ try {
   await operator.goto(other + room);
   await operator.getByText('Abschnitt meldet sich').waitFor();
   assert.deepEqual(await (await ops.request.get(other + room + '/board')).json(), beforeStop);
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555557');
+  await operator.getByLabel('Aktion').selectOption('sms');
+  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  await operator.getByRole('button', { name: 'SMS senden' }).waitFor();
+  const staleDraft = new URL(operator.url()).pathname + new URL(operator.url()).search;
+  await start(base, { SMS_PROVIDER: 'webhook', CALL_PROVIDER: 'webhook' });
+  await operator.goto(base + staleDraft);
+  await operator.getByRole('button', { name: 'SMS senden' }).click();
+  await operator.getByRole('alert').filter({ hasText: 'Dienstkonfiguration' }).waitFor();
+  assert.equal(writes.length, 7);
+
+  await operator.getByRole('option', { name: 'SMS · Webhook' }).waitFor({ state: 'attached' });
+  await operator.getByRole('option', { name: 'Sprachalarm abspielen · Webhook' }).waitFor({ state: 'attached' });
+  await operator.goto(base + room);
+  await operator.getByLabel('Internationale Rufnummer').fill('555');
+  await Promise.all([
+    operator.waitForResponse(response => response.request().method() === 'POST'),
+    operator.getByRole('button', { name: 'Vorschau anzeigen' }).click(),
+  ]);
+  await operator.waitForURL(url => url.searchParams.get('fehler') === 'alarmierung');
+  assert.equal(await operator.getByRole('button', { name: 'SMS senden' }).count(), 0);
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555557');
+  await operator.getByLabel('Aktion').selectOption('sms');
+  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  await operator.getByRole('button', { name: 'SMS senden' }).click();
+  await operator.getByText(/SMS.*555557.*Angenommen/).waitFor();
+  const [verb, endpoint, bearer, sent] = writes.at(-1);
+  assert.deepEqual([verb, endpoint, bearer, sent.capability], ['POST', '/bridge', 'Bearer bridge-only', 'sms']);
+  assert.match(sent.requestId, /^[a-f0-9-]{36}$/);
+  const invitationUrl = sent.text.split('Einladung: ')[1];
+  await guest.goto(invitationUrl);
+  await guest.getByRole('button', { name: 'Raum beitreten' }).waitFor();
+
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555558');
+  await operator.getByLabel('Aktion').selectOption('voice');
+  await Promise.all([
+    operator.waitForResponse(response => response.request().method() === 'POST'),
+    operator.getByRole('button', { name: 'Vorschau anzeigen' }).click(),
+  ]);
+  await operator.waitForURL(url => url.searchParams.get('fehler') === 'alarmierung');
+  assert.equal(await operator.getByRole('button', { name: 'Sprachalarm auslösen' }).count(), 0);
+  await operator.getByLabel('Internationale Rufnummer').fill('+491555555558');
+  await operator.getByLabel('Aktion').selectOption('voice');
+  await operator.getByLabel('Ansage für den Sprachalarm').fill('Bitte zur Einsatzstelle kommen.');
+  await operator.getByRole('button', { name: 'Vorschau anzeigen' }).click();
+  await operator.getByText('Bitte zur Einsatzstelle kommen.').waitFor();
+  await operator.getByRole('button', { name: 'Sprachalarm auslösen' }).click();
+  await operator.getByText('Sprachalarm abspielen · +491555555558 · Angenommen · Webhook', { exact: true }).waitFor();
+  const [voiceVerb, voiceEndpoint, voiceBearer, voice] = writes.at(-1);
+  assert.deepEqual([voiceVerb, voiceEndpoint, voiceBearer, voice.capability, voice.number, voice.text],
+    ['POST', '/bridge', 'Bearer bridge-only', 'voice', '+491555555558', 'Bitte zur Einsatzstelle kommen.']);
+  assert.equal(writes.length, 9);
   console.log('OK: zwei App-Prozesse, Login, Gasteinladung, Chat, Board, Zugriffssperren und Mock-Idempotenz und Ausfall einer Web-Instanz' + (env.LIVEKIT_URL ? ', LiveKit-Remotevideo' : ''));
 } finally {
   await browser?.close();

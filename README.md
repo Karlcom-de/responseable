@@ -1,8 +1,8 @@
 # ResponseAble
 
-**Self-hosted coordination for incidents and continuity exercises.** Open an incident room, invite the people you need, and coordinate through video, chat, a shared whiteboard, and optional phone alerts.
+**Open an incident room. Get the right people in.** ResponseAble gives IT operations, security, and business continuity teams an open-source incident war room they can host themselves. When your usual chat or sign-in service is unavailable, a separately reachable instance gives responders a place to regroup. Invite people by link, split work into rooms, and keep decisions on a shared whiteboard.
 
-![Illustration of a shared incident coordination workspace](docs/responseable.webp)
+![ResponseAble exercise showing incident rooms, a situation brief, and room chat](docs/responseable.webp)
 
 The application interface is in German. ResponseAble runs with PostgreSQL. LiveKit and phone-alert providers can be configured independently.
 
@@ -33,11 +33,11 @@ For a real instance, use a separate PostgreSQL database, set `RESPONSEABLE_MODE=
 
 - **Meetings.** For a local real-mode test, run `livekit-server --dev` on the loopback interface. Set `LIVEKIT_URL=ws://127.0.0.1:7880`, `LIVEKIT_API_KEY=devkey` and `LIVEKIT_API_SECRET=secret`. Use your own keys, WSS and tested media/TURN routing in production. [LiveKit self-hosting](https://docs.livekit.io/transport/self-hosting/)
 - **Whiteboard.** Excalidraw synchronizes shapes, text, arrows, lines, freehand strokes and frames. Each room supports up to 2,000 elements and 2 MB, including deletion markers.
-- **Phone alerts.** Pick an independent SMS or voice provider for your deployment. An HTTP gateway can use a phone you control for SMS and outbound calls. LiveKit SIP can connect a callee directly to the room. [Gateway setup and interface](docs/telephony.md)
+- **Phone alerts.** Select SMS and outbound voice providers independently: Android, an authenticated HTTP webhook, or AWS End User Messaging. LiveKit SIP can dial a participant directly into a room. [Provider setup and webhook contract](docs/telephony.md)
 
 ## Deploy and verify
 
-Use the [Kubernetes guide](docs/kubernetes.md) for Helm, PostgreSQL, LiveKit, backups and failover drills. The [architecture notes](docs/architecture.md) describe the access model and outage boundaries.
+Use the [Kubernetes guide](docs/kubernetes.md) for Helm, PostgreSQL, LiveKit, backups and failover drills. The [staging guide](docs/staging.md) covers a one-replica development environment and the manual test. The [architecture notes](docs/architecture.md) describe the access model and outage boundaries.
 
 ```sh
 npm run build

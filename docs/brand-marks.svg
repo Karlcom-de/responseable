@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 264" width="560" height="264" role="img" aria-labelledby="title">
+  <title id="title">Drei ResponseAble-Zeichen mit Wortmarke und Schwarzproben in 16 und 24 Pixeln</title>
+  <defs>
+    <symbol id="brackets" viewBox="0 0 32 32">
+      <path d="M3 3h11v4H7v18h7v4H3zM29 3H18v4h7v18h-7v4h11zM12 14h8v4h-8z"/>
+    </symbol>
+    <symbol id="rooms" viewBox="0 0 32 32">
+      <path d="M2 3h17v13h11v13H13V16H2zm12 9v5h5v-5z" fill-rule="evenodd"/>
+    </symbol>
+    <symbol id="response-r" viewBox="0 0 32 32">
+      <path d="M5 3h15l6 6v7l-5 5 8 8h-7l-9-10h-2v10H5zm6 5v6h8l2-2v-2l-2-2z" fill-rule="evenodd"/>
+    </symbol>
+  </defs>
+  <rect width="560" height="264" rx="8" fill="#fff"/>
+  <path d="M16 34h528M16 108h528M16 182h528" stroke="#ddd"/>
+  <g fill="#171717" font-family="system-ui, sans-serif">
+    <g font-size="12">
+      <text x="16" y="23">Entwurf</text><text x="213" y="23">Wortmarke</text>
+      <text x="418" y="23">16 px</text><text x="491" y="23">24 px</text>
+      <text x="16" y="76">Koordinationsklammern</text>
+      <text x="16" y="150">Zusammenlaufende Räume</text>
+      <text x="16" y="224">Response-R</text>
+    </g>
+    <g font-size="19" font-weight="700" letter-spacing="-.5">
+      <text x="254" y="78">ResponseAble</text>
+      <text x="254" y="152">ResponseAble</text>
+      <text x="254" y="226">ResponseAble</text>
+    </g>
+  </g>
+  <g fill="#000">
+    <use href="#brackets" x="213" y="55" width="32" height="32"/>
+    <use href="#brackets" x="427" y="63" width="16" height="16"/>
+    <use href="#brackets" x="497" y="59" width="24" height="24"/>
+    <use href="#rooms" x="213" y="129" width="32" height="32"/>
+    <use href="#rooms" x="427" y="137" width="16" height="16"/>
+    <use href="#rooms" x="497" y="133" width="24" height="24"/>
+    <use href="#response-r" x="213" y="203" width="32" height="32"/>
+    <use href="#response-r" x="427" y="211" width="16" height="16"/>
+    <use href="#response-r" x="497" y="207" width="24" height="24"/>
+  </g>
+</svg>

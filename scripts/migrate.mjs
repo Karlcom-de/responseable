@@ -23,6 +23,8 @@ try {
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS body text NOT NULL DEFAULT '';
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS invite_hash text REFERENCES invitations(hash);
     INSERT INTO responseable_schema VALUES (3) ON CONFLICT DO NOTHING;
+    ALTER TABLE notifications ADD COLUMN IF NOT EXISTS provider text;
+    INSERT INTO responseable_schema VALUES (4) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);
