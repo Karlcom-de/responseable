@@ -36,6 +36,8 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       style.textContent = `
         html, body { height: 100%; margin: 0; overflow: hidden; }
         converse-root { display: block; height: 100%; }
+        .conversejs converse-chats.converse-embedded,
+        .conversejs converse-chats.converse-embedded .chatbox { --overlayed-chat-width: 100%; }
         .conversejs.converse-embedded .chatroom,
         .conversejs.converse-embedded .chatroom-body,
         .conversejs.converse-embedded .chat-area,
@@ -67,11 +69,11 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       const root = doc.createElement('converse-root');
       doc.body.append(root);
       // Converse may focus its composer asynchronously as archived messages arrive.
-      const textarea = doc.defaultView?.HTMLTextAreaElement.prototype;
-      const focus = textarea?.focus;
-      const restoreFocus = () => { if (textarea && focus) textarea.focus = focus; };
-      if (textarea && focus) {
-        textarea.focus = function (options) {
+      const element = doc.defaultView?.HTMLElement.prototype;
+      const focus = element?.focus;
+      const restoreFocus = () => { if (element && focus) element.focus = focus; };
+      if (element && focus) {
+        element.focus = function (options) {
           if (!this.matches(".chat-textarea")) focus.call(this, options);
         };
         doc.addEventListener("pointerdown", restoreFocus, { capture: true, once: true });
