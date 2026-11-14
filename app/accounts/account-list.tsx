@@ -146,7 +146,7 @@ export function AccountList({ currentId }: { currentId: string }) {
               </fieldset>
             </AccountDialog>}
             <AccountDialog title={account.active ? 'Deactivate' : 'Reactivate'} submit={account.active ? 'Deactivate account' : 'Reactivate account'}
-              description={account.active ? `${account.displayName} will lose account access and be signed out.` : `${account.displayName} will regain access with their current role and assignments.`}
+              description={account.active ? `${account.displayName} will lose access to new protected requests. An existing call may continue until the connection ends.` : `${account.displayName} will regain access with their current role and assignments.`}
               save={() => update(path, 'PATCH', { active: !account.active }, account.active ? 'Account deactivated.' : 'Account reactivated.')} />
             <AccountDialog title="Reset password" submit="Set temporary password"
               description={`Set a temporary password for ${account.displayName}. Share it through a secure channel.`}
