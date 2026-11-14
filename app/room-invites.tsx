@@ -1,4 +1,5 @@
 'use client';
+import { UserPlus } from 'lucide-react';
 
 import { useState, type FormEvent } from 'react';
 import QRCode from 'qrcode';
@@ -76,7 +77,7 @@ export default function RoomInvites({ path, room }: { path: string; room: string
     if (open) void load();
     else setRevoke(undefined);
   }}>
-    <DialogTrigger render={<Button variant="outline" />}>Invite</DialogTrigger>
+    <DialogTrigger render={<Button />}><UserPlus data-icon="inline-start" aria-hidden="true" />Invite</DialogTrigger>
     <DialogContent className="max-h-[90dvh] overflow-y-auto">
       <DialogHeader><DialogTitle>Invite responders</DialogTitle>
         <DialogDescription>Room: {room}. The guest link grants room access. Share it only with the intended guests.</DialogDescription>

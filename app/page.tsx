@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
-import exercisePreview from '../docs/responseable.webp';
+import exercisePreview from '../docs/incident-room-desktop.webp';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { query as sql, demo, roomPath, session, type Incident } from '../lib/store';
@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
     </div>
     <figure className="loginProof">
       <Image src={exercisePreview} alt="Exercise with two incident rooms, a situation summary and room chat" unoptimized />
-      <figcaption>Exercise · Incident command and North sector</figcaption>
+      <figcaption>Synthetic exercise · Customer portal outage</figcaption>
     </figure>
   </main></>;
 

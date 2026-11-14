@@ -1,6 +1,6 @@
 # ResponseAble · Marke und Oberfläche
 
-ResponseAble ist der Name. Die Kopfzeile kombiniert das Raumzeichen mit dem gesetzten Schriftzug **ResponseAble**. Das [SVG](../app/icon.svg) ist die editierbare Vorlage für App- und Browser-Icon. Amber (#FFCF70) markiert die Hauptaktion, Links und den aktiven Raum. Nachtblau (#0D151D), Schiefer (#151F29) und heller Text (#EDF4F7) tragen die Arbeitsoberfläche. Das Zeichen funktioniert einfarbig in Weiß auf dunklem oder Schwarz auf hellem Grund. Rundum mindestens eine Strichbreite Abstand lassen. Schrift ist Instrument Sans mit System-Fallback.
+Die Kopfzeile verbindet das Response-R mit dem Schriftzug **ResponseAble**. Das [App-Icon](../app/icon.svg) und die [Wort-Bild-Marke](responseable-lockup.svg) sind editierbare SVGs. Das Icon verwendet eine feste Amber-Fläche (#FFCF70), damit es auf hellem und dunklem Grund lesbar bleibt. Die Wortmarke passt ihre Textfarbe an das Farbschema an. Die Oberfläche nutzt Nachtblau, Schiefer und Amber als einzigen Akzent.
 
 ## Visuelle Referenzen
 
@@ -10,17 +10,19 @@ ResponseAble ist der Name. Die Kopfzeile kombiniert das Raumzeichen mit dem gese
 
 ## Drei Entwürfe
 
-![Drei Zeichen neben ResponseAble und als Schwarzproben bei 16 und 24 Pixeln](brand-marks.svg)
+![Drei Zeichenentwürfe neben ResponseAble und in kleinen einfarbigen Größen](brand-marks.svg)
 
-Die gewählten Koordinationsklammern bestehen aus zwei durchgehenden Seiten und einem breiten Mittelstrich für den gemeinsamen Arbeitsbereich. Der Rahmen öffnet sich oben und unten mittig. Bei einem typischen Zuschneide- oder Suchersymbol definieren vier voneinander getrennte Ecken einen Bildausschnitt. Der Mittelstrich und die geschlossenen Seiten geben ResponseAble seine eigene Silhouette.
-
-| Entwurf | Idee | Bewertung für kleine Größen |
+| Entwurf | Form | Entscheidung |
 | --- | --- | --- |
-| Koordinationsklammern | Zwei eckige Raumgrenzen um einen gemeinsamen Arbeitspunkt | Gewählt. In 16 px sind die getrennten Teile und die offene Kontur erkennbar. |
-| Zusammenlaufende Räume | Zwei versetzte Raumflächen teilen sich einen Durchgang | Überlappung wirkt in 16 px wie ein einzelner Block. |
-| Response-R | Eckiges R mit auslaufendem Weg | Als Buchstabe lesbar, vermittelt allein wenig über den Raum. |
+| Response R | Winkeliger Buchstabe mit versetztem Fuß | Gewählt. Der kräftige Stamm und der getrennte Fuß ergeben eine erkennbare Silhouette. |
+| Interlocking paths | Zwei gegenläufige Formen greifen ineinander | Vermittelt Zusammenarbeit, wirkt in kleiner Darstellung stärker wie ein Richtungssymbol. |
+| Signal stack | Drei gestaffelte Balken | Gut skalierbar, wirkt eher wie ein Status- oder Menüsymbol. |
 
-Die Raumliste unterscheidet Haupt- und Unterraum mit Raute und Rautezeichen (#), jeweils mit Namen. Die aktive Zeile hat zusätzlich eine sichtbare Kante. Symbole für Aktionen stets mit Text beschriften. Die [Produktaufnahme](responseable.webp) zeigt eine synthetische Übung und eignet sich für die öffentliche README.
+Lucide-Symbole stützen die beschrifteten Bereiche und Aktionen. Die Raumliste zeigt Haupt- und Unterräume mit Tür- und Verzweigungssymbol. Die aktive Zeile erhält zusätzlich eine sichtbare Kante.
+
+## Produktaufnahmen
+
+Englische Oberfläche aus einer synthetischen Übung, aufgenommen direkt im Browser. [Einsatzraum am Desktop](incident-room-desktop.webp), [Runbook](runbook-desktop.webp) und [Gastansicht am Smartphone](incident-room-mobile.webp).
 
 ## UX-Pfade
 

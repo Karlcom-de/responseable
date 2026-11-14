@@ -137,3 +137,13 @@ nav a span{color:var(--accent)}
 .markdown-content ol { list-style: decimal; padding-inline-start: 1.5rem; }
 .markdown-content pre { overflow: auto; padding: .75rem; background: var(--bg); }
 .markdown-content :is(td,th) { border: 1px solid var(--line); padding: .3rem .5rem; }
+
+.iconLabel { display: inline-flex; align-items: center; gap: .45rem; }
+.navIcon { width: 1rem; height: 1rem; flex: none; color: var(--accent); }
+
+.workspace { padding-block: clamp(1rem, 2.5vw, 2rem); }
+.workspace .panel { gap: .75rem; box-shadow: none; }
+.workspace .panel > h2, .workspace .eyebrow { margin-bottom: 0; }
+.workspace .roomForm, .workspace .invites { margin-top: .2rem; padding-top: .7rem; }
+.workspace .chatScroll { height: clamp(180px, 32vh, 380px); }
+.workspace .composer { margin-top: .25rem; }

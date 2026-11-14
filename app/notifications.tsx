@@ -1,3 +1,4 @@
+import { BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +25,7 @@ export default async function Notifications({ incident, room, draft, error }: {
       AND status = 'draft' AND created > $3
   `, [draft, room, Date.now() - 900_000]) : [];
   return <section className="roomForm">
-    <h3>Alerting</h3>
+    <h3 className="iconLabel"><BellRing className="navIcon" aria-hidden="true" />Alerting</h3>
     {error && <Notice>Check the phone number and provider configuration.</Notice>}
     {!Object.values(available).some(Boolean) ? <p className="muted">Phone alerting is not configured.</p>
       : <form className="stack" action={prepareNotification.bind(null, incident, room)}>

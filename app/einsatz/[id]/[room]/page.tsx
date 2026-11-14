@@ -1,3 +1,4 @@
+import { BookOpen, DoorOpen, GitBranch, MessageSquare } from 'lucide-react';
 import RoomInvites from '@/app/room-invites';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,10 +41,10 @@ export default async function Workspace({ params, searchParams }: {
       <a href="#rooms" >Rooms</a><a href="#situation">Situation</a><a href="#chat">Room chat</a>
     </nav>
     <div className="workspaceGrid">
-      <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms <span className="count">{rooms.length}</span></h2>
+      <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
         <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
           <Link href={roomPath(id, item.id)} aria-current={item.id === room ? 'page' : undefined}>
-            <span aria-hidden="true">{item.main ? '◈' : '#'}</span>{item.name}
+            {item.main ? <DoorOpen className="navIcon" aria-hidden="true" /> : <GitBranch className="navIcon" aria-hidden="true" />}{item.name}
           </Link>
         </li>)}</ul></nav>
         {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
@@ -55,14 +56,14 @@ export default async function Workspace({ params, searchParams }: {
       <Card className="panel situation" id="situation" role="region">
         <div className="eyebrow">{active.main ? 'Main room' : 'Subroom'}</div>
         <h2 className="roomTitle">{active.name}</h2>
-        <Link href={roomPath(id, room) + "/wissen"}>Room knowledge</Link>
+        <Link href={roomPath(id, room) + "/wissen"} className="iconLabel"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
         {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
         <Board key={"board-" + room} path={roomPath(id, room)} />
         <Meeting key={"meeting-" + room} path={roomPath(id, room)} enabled={Boolean(!demo && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)} />
         {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
-      <Card className="panel chat" id="chat" role="region"><Refresh /><h2>Room chat</h2>
+      <Card className="panel chat" id="chat" role="region"><Refresh /><h2 className="iconLabel"><MessageSquare className="navIcon" aria-hidden="true" />Room chat</h2>
         <ScrollArea className="chatScroll"><div className="messages" role="log" aria-label="Chat history">
           {messages.length ? messages.map(message => <article key={message.id}>
             <div className="messageMeta"><strong>{message.name}</strong>{message.guest === 1 && <span>Guest</span>}
