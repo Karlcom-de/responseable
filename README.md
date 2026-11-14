@@ -1,10 +1,8 @@
-# ResponseAble
+![ResponseAble](docs/responseable-lockup.svg)
 
-**Open an incident room. Get the right people in.** ResponseAble gives IT operations, security, and business continuity teams an open-source incident war room they can host themselves. When your usual chat or sign-in service is unavailable, a separately reachable instance gives responders a place to regroup. Invite people by link, split work into rooms, and keep decisions on a shared whiteboard.
+ResponseAble is a self-hosted incident war room for coordinating responders across rooms, chat, whiteboards and meetings.
 
-![ResponseAble exercise showing incident rooms, a situation brief, and room chat](docs/responseable.webp)
-
-ResponseAble runs with PostgreSQL. LiveKit and phone-alert providers can be configured independently.
+![Desktop incident room with room navigation, a situation brief and chat](docs/incident-room-desktop.webp)
 
 ## Try it on Kubernetes
 
@@ -27,6 +25,12 @@ While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/r
 - Share an expiring, room-specific invitation with a guest.
 - Keep chat and the incident whiteboard available across reloads and application restarts.
 - Use LiveKit for video, audio and screen sharing. Invite an individual by SMS, place a mobile call through a compatible gateway, or dial a phone participant into a meeting with LiveKit SIP.
+
+## Screenshots
+
+![A runbook open in the desktop knowledge workspace](docs/runbook-desktop.webp)
+
+![Guest incident room and chat on a mobile display](docs/incident-room-mobile.webp)
 
 ## Quick start
 

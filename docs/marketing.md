@@ -12,7 +12,7 @@
 | [OneUptime](https://oneuptime.com/), [OpenStatus](https://www.openstatus.dev/) | Open-Source-Observability und Statusseiten, bei OneUptime mit Self-Hosting-Angebot | Koordination nach dem Alarm als Einstieg zeigen. |
 | [Element](https://element.io/en), [Jitsi](https://jitsi.org/) | Matrix-Kommunikation und Videokonferenzen | Den Einsatz mit benannten Arbeitssträngen, Raumgrenzen und Lagebild zeigen. |
 
-**Produktbeleg.** Die [Übungsaufnahme](responseable.webp) zeigt Haupt- und Unterraum neben Lagebeschreibung und Chat. In der Übung lassen sich Räume wechseln und Lagebild und Chat ausprobieren. Die konfigurierte Instanz bietet raumbezogene Einladungen. LiveKit und Telefoniefunktionen hängen von der Installation ab.
+**Produktbeleg.** Die [Übungsaufnahme](incident-room-desktop.webp) zeigt Haupt- und Unterraum neben Lagebeschreibung und Chat. In der Übung lassen sich Räume wechseln und Lagebild und Chat ausprobieren. Die konfigurierte Instanz bietet raumbezogene Einladungen. LiveKit und Telefoniefunktionen hängen von der Installation ab.
 
 ## Beschreibung und Aufruf
 
