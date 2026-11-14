@@ -19,7 +19,7 @@ Open **http://127.0.0.1:3190** and select **Übungsleitstelle öffnen**. Try the
 
 The [Gitea mirror](https://tea.karlcom.de/karl/responseable) can replace the GitHub clone URL. Stop forwarding with Ctrl+C. Remove the exercise with `kubectl delete namespace responseable-exercise`, or use the namespace selected via `RESPONSEABLE_EXERCISE_NAMESPACE`.
 
-While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/ready`. Video, phone alerts and external guest access are outside the default exercise. Use a private HTTPS hostname for remote guest sharing and production passkeys. See [Kubernetes deployment](docs/kubernetes.md) and [staging smoke tests](docs/staging.md) for those environments.
+While forwarding, check readiness with `curl -fsS http://127.0.0.1:3190/health/ready`. With local npm dependencies and Playwright Chromium installed, run the browser smoke with `node scripts/exercise-smoke.mjs`. Video, phone alerts and external guest access are outside the default exercise. Use a private HTTPS hostname for remote guest sharing and production passkeys. See [Kubernetes deployment](docs/kubernetes.md) and [staging smoke tests](docs/staging.md) for those environments.
 
 ## What you can do
 
