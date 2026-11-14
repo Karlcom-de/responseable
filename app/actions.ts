@@ -1,10 +1,12 @@
 'use server';
 
+import { enrolled, required } from '../lib/mfa';
+import { redeemInvite, smsInviteToken } from '../lib/invites';
 import { randomUUID } from 'node:crypto';
 import { dispatch, isMethod, notificationsAvailable, type Method, type Provider } from '../lib/notifications';
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { query, demo, endSession, hash, invitation, newId, operatorLogin, roomInIncident, roomPath, session, startSession, token } from '../lib/store';
+import { query, demo, endSession, hash, newId, operatorLogin, roomInIncident, roomPath, session, startSession, token } from '../lib/store';
 
 function field(form: FormData, name: string, max: number, trim = true) {
   const value = form.get(name);
@@ -23,6 +25,7 @@ export async function login(form: FormData) {
   const name = field(form, 'name', 80);
   const password = field(form, 'password', 256, false);
   if (!name || !password || !operatorLogin(name, password)) redirect('/?fehler=anmeldung');
+  if (required() || await enrolled()) redirect('/?fehler=anmeldung');
   await startSession(name, null, Date.now() + 8 * 3600_000);
   redirect('/');
 }
@@ -66,17 +69,16 @@ export async function createInvitation(incident: string, room: string) {
   await operator();
   if (!await roomInIncident(incident, room)) notFound();
   const value = token();
-  await query('INSERT INTO invitations VALUES ($1, $2, $3)', [hash(value), room, Date.now() + 3600_000]);
+  await query('INSERT INTO invitations (hash, room, expires) VALUES ($1, $2, $3)', [hash(value), room, Date.now() + 3600_000]);
   redirect(roomPath(incident, room) + '?einladung=' + value);
 }
 
 export async function join(value: string, form: FormData) {
-  const invite = await invitation(value);
-  if (!invite) notFound();
   const name = field(form, 'name', 80);
-  if (!name) redirect('/einladung/' + value + '?fehler=name');
-  await startSession(name, invite.room, Number(invite.expires));
-  redirect(roomPath(invite.incident, invite.room));
+  if (!name || name.includes('\0')) notFound();
+  const result = await redeemInvite(value, name);
+  if (!result.href) notFound();
+  redirect(result.href);
 }
 
 export async function sendMessage(incident: string, room: string, form: FormData) {
@@ -113,10 +115,10 @@ export async function prepareNotification(incident: string, room: string, form: 
     const origin = process.env.RESPONSEABLE_PUBLIC_ORIGIN;
     if (!origin) redirect(path + '?fehler=alarmierung');
     const [entry] = await query<{ title: string }>('SELECT title FROM incidents WHERE id = $1', [incident]);
-    const linkToken = token();
-    const body = `${entry.title} · ${active.name}\nEinladung: ${origin}/einladung/${linkToken}`;
+    const linkToken = smsInviteToken(id);
+    const body = `${entry.title} · ${active.name}`;
     await query(`
-      WITH invite AS (INSERT INTO invitations VALUES ($1, $2, $3) RETURNING hash)
+      WITH invite AS (INSERT INTO invitations (hash, room, expires) VALUES ($1, $2, $3) RETURNING hash)
       INSERT INTO notifications (id, room, operator, number, method, status, created, body, invite_hash, provider)
       SELECT $4, $2, $5, $6, 'sms', 'draft', $7, $8, hash, $9 FROM invite
     `, [hash(linkToken), room, 0, id, current.name, number, now, body, provider]);
@@ -145,9 +147,12 @@ export async function confirmNotification(incident: string, room: string, id: st
       UPDATE invitations SET expires = $7 FROM claimed WHERE invitations.hash = claimed.invite_hash
     )
     SELECT number, method, body, provider FROM claimed
-  `, [id, room, current.name, now - 900_000, now, JSON.stringify(available), now + 3600_000]);
+  `, [id, room, current.name, now - 900_000, now, JSON.stringify(available), now + 900_000]);
   if (claimed) {
-    const status = await dispatch(claimed.provider, claimed.method, id, room, claimed.number, claimed.body);
+    const body = claimed.method === 'sms' && !claimed.body.includes('/einladung/')
+      ? claimed.body + '\nInvitation: ' + process.env.RESPONSEABLE_PUBLIC_ORIGIN + '/j#' + smsInviteToken(id)
+      : claimed.body;
+    const status = await dispatch(claimed.provider, claimed.method, id, room, claimed.number, body);
     await query('UPDATE notifications SET status = $2, body = $3 WHERE id = $1', [id, status, '']);
   } else {
     const [draft] = await query('SELECT id FROM notifications WHERE id = $1 AND room = $2 AND operator = $3 AND status = $4',

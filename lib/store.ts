@@ -18,7 +18,7 @@ export function db() {
 
 export async function databaseReady() {
   const result = await db().query<{ demo: boolean }>(
-    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 5)',
+    'SELECT demo FROM responseable_mode WHERE EXISTS (SELECT 1 FROM responseable_schema WHERE version = 7)',
   );
   return result.rows[0]?.demo === demo;
 }
@@ -45,8 +45,8 @@ export async function session() {
   const value = (await cookies()).get(cookieName)?.value;
   if (!value || !validToken(value)) return undefined;
   return (await query<Session>(
-    'SELECT sessions.name, room FROM sessions JOIN responseable_mode ON demo = $3 WHERE hash = $1 AND expires > $2',
-    [hash(value), Date.now(), demo],
+    'SELECT sessions.name, room FROM sessions JOIN responseable_mode ON demo = $3 WHERE hash = $1 AND expires > $2 AND NOT EXISTS (SELECT 1 FROM invitations WHERE id = sessions.invite_id AND revoked_at IS NOT NULL) AND (room IS NOT NULL OR demo OR mfa_verified OR (NOT $4 AND NOT EXISTS (SELECT 1 FROM operator_mfa WHERE operator = sessions.name)))',
+    [hash(value), Date.now(), demo, process.env.RESPONSEABLE_MFA_REQUIRED === 'true'],
   ))[0];
 }
 
@@ -57,11 +57,15 @@ export async function endSession() {
   jar.delete(cookieName);
 }
 
-export async function startSession(name: string, room: string | null, expires: number) {
+export async function startSession(name: string, room: string | null, expires: number, verified = false) {
   if (!await databaseReady()) throw new Error('Datenbankmodus oder Schema stimmt nicht.');
   await endSession();
   const value = token();
-  await query('INSERT INTO sessions VALUES ($1, $2, $3, $4)', [hash(value), name, room, expires]);
+  await query('INSERT INTO sessions (hash, name, room, expires, mfa_verified) VALUES ($1, $2, $3, $4, $5)', [hash(value), name, room, expires, verified]);
+  await setSessionCookie(value, expires);
+}
+
+export async function setSessionCookie(value: string, expires: number) {
   (await cookies()).set(cookieName, value, {
     httpOnly: true, sameSite: 'lax',
     secure: process.env.RESPONSEABLE_SECURE_COOKIE !== 'false',
@@ -88,7 +92,7 @@ export async function invitation(value: string) {
   return (await query<{ room: string; incident: string; name: string; expires: string }>(`
     SELECT rooms.id AS room, rooms.incident, rooms.name, invitations.expires
     FROM invitations JOIN rooms ON rooms.id = invitations.room JOIN responseable_mode ON demo = $3
-    WHERE hash = $1 AND expires > $2
+    WHERE hash = $1 AND expires > $2 AND revoked_at IS NULL AND uses < max_uses
   `, [hash(value), Date.now(), demo]))[0];
 }
 

@@ -33,6 +33,34 @@ try {
       UNIQUE (room, slug)
     );
     INSERT INTO responseable_schema VALUES (5) ON CONFLICT DO NOTHING;
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS id uuid DEFAULT gen_random_uuid() NOT NULL;
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS max_uses integer NOT NULL DEFAULT 1;
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS uses integer NOT NULL DEFAULT 0;
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS revoked_at bigint;
+    CREATE UNIQUE INDEX IF NOT EXISTS invitation_id ON invitations(id);
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invite_id uuid REFERENCES invitations(id);
+    CREATE INDEX IF NOT EXISTS session_invite ON sessions(invite_id);
+    INSERT INTO responseable_schema VALUES (6) ON CONFLICT DO NOTHING;
+    CREATE TABLE IF NOT EXISTS operator_mfa (
+      operator text PRIMARY KEY, seed text NOT NULL, last_step bigint NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS operator_credentials (
+      id text PRIMARY KEY, operator text NOT NULL REFERENCES operator_mfa(operator) ON DELETE CASCADE,
+      public_key bytea NOT NULL, counter bigint NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS operator_recovery (
+      operator text NOT NULL REFERENCES operator_mfa(operator) ON DELETE CASCADE,
+      hash text NOT NULL, PRIMARY KEY(operator,hash)
+    );
+    CREATE TABLE IF NOT EXISTS auth_challenges (
+      browser text NOT NULL, purpose text NOT NULL, operator text NOT NULL, payload text NOT NULL,
+      expires bigint NOT NULL, PRIMARY KEY(browser,purpose)
+    );
+    CREATE TABLE IF NOT EXISTS auth_budget (
+      operator text PRIMARY KEY, window_start bigint NOT NULL, count integer NOT NULL
+    );
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_verified boolean NOT NULL DEFAULT false;
+    INSERT INTO responseable_schema VALUES (7) ON CONFLICT DO NOTHING;
   `);
   const demo = process.env.RESPONSEABLE_MODE === 'demo';
   await db.query('INSERT INTO responseable_mode VALUES (true, $1) ON CONFLICT DO NOTHING', [demo]);

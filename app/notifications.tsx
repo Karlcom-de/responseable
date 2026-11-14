@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
 import { methodLabels, notificationsAvailable, statusLabels, providerLabels, type Provider, type Method, type Status } from '../lib/notifications';
+import { smsInviteToken } from '../lib/invites';
 import { query } from '../lib/store';
 import { confirmNotification, prepareNotification } from './actions';
 import { Notice } from './shell';
@@ -38,7 +39,10 @@ export default async function Notifications({ incident, room, draft, error }: {
       </form>}
     {preview && <div className="inviteResult">
       <p><strong>{methodLabels[preview.method]}</strong> · {preview.number}{preview.provider && ' · ' + providerLabels[preview.provider]}</p>
-      {preview.body && <p className="description">{preview.body}</p>}
+      {preview.body && <p className="description">{preview.body}
+        {preview.method === 'sms' && !preview.body.includes('/einladung/') &&
+          '\nInvitation: ' + process.env.RESPONSEABLE_PUBLIC_ORIGIN + '/j#' + smsInviteToken(preview.id)}
+      </p>}
       <form action={confirmNotification.bind(null, incident, room, preview.id)}>
         <Button type="submit">{preview.method === 'sms' ? 'Send SMS' : preview.method === 'voice' ? 'Send voice alert' : 'Place call'}</Button>
       </form>
