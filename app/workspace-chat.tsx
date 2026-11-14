@@ -39,7 +39,17 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         .conversejs.converse-embedded .chatroom,
         .conversejs.converse-embedded .chatroom-body,
         .conversejs.converse-embedded .chat-area,
-        .conversejs.converse-embedded .chat-content { min-width: 0; min-height: 0; }
+        .conversejs.converse-embedded .chat-content,
+        .conversejs.converse-embedded .chatroom .chat-textarea,
+        .conversejs.converse-embedded .chatroom .chat-content__messages,
+        .conversejs.converse-embedded .chat-msg__message,
+        .conversejs.converse-embedded .chat-msg__body--wrapper {
+          min-width: 0; min-height: 0; max-width: 100%;
+        }
+        .conversejs.converse-embedded .chatroom { width: 100%; }
+        .conversejs .chat-content__notifications,
+        .conversejs .chat-content__notifications *,
+        .conversejs .chat-msg__text a { white-space: normal; overflow-wrap: anywhere; }
         .conversejs .chat-content__messages { overscroll-behavior-y: contain; }
         .conversejs .chat-msg__text, .conversejs .chat-msg__author,
         .conversejs .chatbox-title__text { overflow-wrap: anywhere; }
