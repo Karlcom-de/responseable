@@ -1,5 +1,6 @@
 import 'server-only';
 import { affiliate, identity, password } from '../scripts/xmpp/admin.mjs';
+import { roomNickname } from '../scripts/xmpp/nickname.mjs';
 import { db } from './store';
 
 export async function xmppRoom(room: string) {
@@ -19,8 +20,9 @@ export async function bootstrap(room: string, sessionHash: string) {
   const connection = await db().connect();
   try {
     await connection.query('BEGIN');
-    const { rows: [grant] } = await connection.query<{ expires: string; muc: string }>(`
-      SELECT s.expires, x.muc FROM sessions s JOIN xmpp_rooms x ON x.room=$1
+    const { rows: [grant] } = await connection.query<{ expires: string; muc: string; display_name: string; room_title: string }>(`
+      SELECT s.expires, x.muc, s.name AS display_name, r.name AS room_title
+      FROM sessions s JOIN xmpp_rooms x ON x.room=$1 JOIN rooms r ON r.id=x.room
       WHERE s.hash=$2 AND (s.room IS NULL OR s.room=$1) AND s.expires>$3
       AND (s.invite_id IS NULL OR EXISTS (
         SELECT 1 FROM invitations i WHERE i.id=s.invite_id AND i.revoked_at IS NULL AND i.expires>$3
@@ -37,8 +39,8 @@ export async function bootstrap(room: string, sessionHash: string) {
     // Persist the reconciliation record before making an external change.
     await connection.query('COMMIT');
     await reconcileXmpp(false, room, sessionHash);
-    return { jid, nick: user, password: password(config.secret, jid, expiresAt),
-      roomJid: grant.muc + '@' + config.service, websocketUrl: config.websocketUrl, expiresAt };
+    return { jid, nick: roomNickname(grant.display_name, user), password: password(config.secret, jid, expiresAt),
+      roomTitle: grant.room_title, roomJid: grant.muc + '@' + config.service, websocketUrl: config.websocketUrl };
   } finally {
     await connection.query('ROLLBACK').catch(() => {});
     connection.release();
@@ -57,7 +59,7 @@ export async function reconcileXmpp(revocationsOnly: boolean, room?: string, ses
       LEFT JOIN sessions s ON s.hash=g.session_hash LEFT JOIN invitations i ON i.id=s.invite_id
       WHERE ($2::text IS NULL OR g.room=$2) AND ($3::text IS NULL OR g.session_hash=$3)
         AND (NOT $4 OR NOT COALESCE(s.expires>$1 AND (s.invite_id IS NULL OR (i.revoked_at IS NULL AND i.expires>$1)),false))
-      LIMIT 20 FOR UPDATE OF g SKIP LOCKED
+      LIMIT 20 FOR UPDATE OF g ${revocationsOnly ? 'SKIP LOCKED' : ''}
     `, [Date.now(), room ?? null, sessionHash ?? null, revocationsOnly]);
     if (!revocationsOnly && !rows[0]?.active) throw Error('XMPP grant no longer active');
     for (const grant of rows) {
