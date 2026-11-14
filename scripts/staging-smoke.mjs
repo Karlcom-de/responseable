@@ -20,7 +20,7 @@ try {
   await operator.goto(base);
   await operator.getByLabel('Username').fill(process.env.SMOKE_OPERATOR);
   await operator.getByLabel('Password').fill(password);
-  await operator.getByRole('button', { name: 'Sign in' }).click();
+  await operator.getByRole('button', { name: 'Sign in', exact: true }).click();
   await operator.getByLabel('Incident title').fill('Staging ' + Date.now());
   await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
   await operator.getByRole('button', { name: 'Create incident' }).click();
@@ -33,6 +33,7 @@ try {
   await operator.getByRole('button', { name: 'Invite', exact: true }).click();
   await operator.getByRole('button', { name: 'Create invite' }).click();
   const invite = await operator.getByLabel('Guest link', { exact: true }).inputValue();
+  await operator.keyboard.press('Escape');
   await guest.goto(new URL(invite, base).href);
   await guest.getByLabel('Display name').fill('Gast Alex');
   await guest.getByRole('button', { name: 'Join room' }).click();

@@ -76,7 +76,7 @@ try {
   await operator.goto(base);
   await operator.getByLabel('Username').fill('Testleitung');
   await operator.getByLabel('Password').fill(password);
-  await operator.getByRole('button', { name: 'Sign in' }).click();
+  await operator.getByRole('button', { name: 'Sign in', exact: true }).click();
   await operator.getByLabel('Incident title').fill('Abnahme ' + Date.now());
   await operator.getByLabel('Situation summary').fill('Interne Arbeitsfläche');
   await operator.getByRole('button', { name: 'Create incident' }).click();
