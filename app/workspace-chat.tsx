@@ -62,17 +62,18 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       `;
       doc.head.append(style);
       const root = doc.createElement('converse-root');
-      // Keep the embedded client out of the focus order while it opens its room.
-      root.inert = true;
       doc.body.append(root);
-      const ready = new MutationObserver(() => {
-        if (root.querySelector('textarea.chat-textarea, [role="alert"], .modal.show')) {
-          root.inert = false;
-          ready.disconnect();
-        }
-      });
-      ready.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-      const enableInteraction = window.setTimeout(() => { root.inert = false; ready.disconnect(); }, 8000);
+      // Converse may focus its composer asynchronously as archived messages arrive.
+      const textarea = doc.defaultView?.HTMLTextAreaElement.prototype;
+      const focus = textarea?.focus;
+      const restoreFocus = () => { if (textarea && focus) textarea.focus = focus; };
+      if (textarea && focus) {
+        textarea.focus = function (options) {
+          if (!this.matches(".chat-textarea")) focus.call(this, options);
+        };
+        doc.addEventListener("pointerdown", restoreFocus, { capture: true, once: true });
+        doc.addEventListener("keydown", restoreFocus, { capture: true, once: true });
+      }
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -104,7 +105,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; ready.disconnect(); clearTimeout(enableInteraction); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; restoreFocus(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
