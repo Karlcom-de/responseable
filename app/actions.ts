@@ -5,7 +5,7 @@ import { redeemInvite, smsInviteToken } from '../lib/invites';
 import { randomUUID } from 'node:crypto';
 import { dispatch, isMethod, notificationsAvailable, type Method, type Provider } from '../lib/notifications';
 import { notFound, redirect } from 'next/navigation';
-import { query, demo, endSession, hash, newId, operatorLogin, roomInIncident, roomPath, session, startSession, token } from '../lib/store';
+import { query, demo, accountsEnabled, roomManagement, endSession, hash, newId, operatorLogin, roomInIncident, roomPath, session, startSession, token } from '../lib/store';
 
 function field(form: FormData, name: string, max: number, trim = true) {
   const value = form.get(name);
@@ -23,7 +23,7 @@ async function operator() {
 export async function login(form: FormData) {
   const name = field(form, 'name', 80);
   const password = field(form, 'password', 256, false);
-  if (!name || !password || !operatorLogin(name, password)) redirect('/?fehler=anmeldung');
+  if (accountsEnabled() || !name || !password || !operatorLogin(name, password)) redirect('/?fehler=anmeldung');
   if (required() || await enrolled()) redirect('/?fehler=anmeldung');
   await startSession(name, null, Date.now() + 8 * 3600_000);
   redirect('/');
@@ -41,7 +41,8 @@ export async function logout() {
 }
 
 export async function createIncident(form: FormData) {
-  await operator();
+  const current = await operator();
+  if (accountsEnabled() && !demo && current.role !== "admin") notFound();
   const title = field(form, 'title', 100);
   const summary = field(form, 'summary', 1500);
   if (!title) redirect('/?fehler=titel');
@@ -55,8 +56,7 @@ export async function createIncident(form: FormData) {
 }
 
 export async function createRoom(incident: string, currentRoom: string, form: FormData) {
-  await operator();
-  if (!await roomInIncident(incident, currentRoom)) notFound();
+  if (!await roomManagement(incident, currentRoom)) notFound();
   const name = field(form, 'name', 80);
   if (!name) redirect(roomPath(incident, currentRoom) + '?fehler=raum');
   const room = newId();
@@ -65,8 +65,7 @@ export async function createRoom(incident: string, currentRoom: string, form: Fo
 }
 
 export async function createInvitation(incident: string, room: string) {
-  await operator();
-  if (!await roomInIncident(incident, room)) notFound();
+  if (!await roomManagement(incident, room)) notFound();
   const value = token();
   await query('INSERT INTO invitations (hash, room, expires) VALUES ($1, $2, $3)', [hash(value), room, Date.now() + 3600_000]);
   redirect(roomPath(incident, room) + '?einladung=' + value);
@@ -81,7 +80,8 @@ export async function join(value: string, form: FormData) {
 }
 
 export async function prepareNotification(incident: string, room: string, form: FormData) {
-  const current = await operator();
+  const current = await roomManagement(incident, room);
+  if (!current) notFound();
   const active = await roomInIncident(incident, room);
   if (!active) notFound();
   const path = roomPath(incident, room);
@@ -118,8 +118,8 @@ export async function prepareNotification(incident: string, room: string, form: 
 }
 
 export async function confirmNotification(incident: string, room: string, id: string) {
-  const current = await operator();
-  if (!await roomInIncident(incident, room)) notFound();
+  const current = await roomManagement(incident, room);
+  if (!current) notFound();
   const path = roomPath(incident, room);
   const available = notificationsAvailable();
   const now = Date.now();

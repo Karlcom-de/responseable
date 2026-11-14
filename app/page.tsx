@@ -6,7 +6,7 @@ import Image from 'next/image';
 import exercisePreview from '../docs/incident-room-desktop.webp';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { query as sql, demo, roomPath, session, type Incident } from '../lib/store';
+import { accountsEnabled, query as sql, demo, roomPath, session, type Incident } from '../lib/store';
 import { createIncident, enterDemo } from './actions';
 import { Header, Notice } from './shell';
 
@@ -38,8 +38,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
 
   const incidents = await sql<Incident & { room: string }>(`
     SELECT incidents.id, title, summary, rooms.id AS room FROM incidents
-    JOIN rooms ON rooms.incident = incidents.id AND rooms.main = 1 ORDER BY created DESC
-  `);
+    JOIN rooms ON rooms.incident = incidents.id AND rooms.main = 1
+    WHERE $1 OR EXISTS (SELECT 1 FROM incident_accounts WHERE account_id=$2 AND incident_id=incidents.id)
+    ORDER BY created DESC
+  `, [demo || !accountsEnabled() || current.role === "admin", current.accountId]);
   return <><Header name={current.name} /><main className="overview">
     <div className="eyebrow">Response workspace</div><h1>Incident overview</h1>
     <div className="overviewGrid">
@@ -48,14 +50,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
           <Link href={roomPath(incident.id, incident.room)}><strong>{incident.title}</strong><span>{incident.summary}</span></Link>
         </li>)}</ul> : <p className="muted">No incidents yet.</p>}
       </Card>
-      <Card className="panel" role="region"><h2>New incident</h2>
+      {(demo || !accountsEnabled() || current.role === "admin") && <Card className="panel" role="region"><h2>New incident</h2>
         <form className="stack" action={createIncident}>
           {query.fehler === 'titel' && <Notice>Enter an incident title.</Notice>}
           <label>Incident title<Input name="title" required maxLength={100} /></label>
           <label>Situation summary<Textarea name="summary" rows={4} maxLength={1500} /></label>
           <Button type="submit">Create incident</Button>
         </form>
-      </Card>
+      </Card>}
     </div>
   </main></>;
 }

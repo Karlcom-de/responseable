@@ -1,16 +1,33 @@
 import 'server-only';
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { cookies } from 'next/headers';
 import { TOTP, Secret } from 'otpauth';
-import { demo, hash, query, session, startSession, token } from './store';
+import { accountsEnabled, demo, hash, query, session, startSession, token } from './store';
 
-export const account = () => process.env.RESPONSEABLE_OPERATOR;
-export const required = () => process.env.RESPONSEABLE_MFA_REQUIRED === 'true';
+export type AuthIdentity = { id: string; login: string; generation: number };
+const authIdentity = new AsyncLocalStorage<AuthIdentity>();
+export const withIdentity = <T>(identity: AuthIdentity, run: () => T) => authIdentity.run(identity, run);
+export const account = () => accountsEnabled() ? authIdentity.getStore()?.id : process.env.RESPONSEABLE_OPERATOR;
+export async function currentIdentity() {
+  const browser = await authCookie();
+  if (!browser) return undefined;
+  return (await query<AuthIdentity>(`
+    SELECT a.id,a.login,a.credential_generation AS generation FROM auth_challenges c
+    JOIN accounts a ON a.id::text=c.operator AND a.credential_generation=c.credential_generation
+    WHERE c.browser=$1 AND c.expires>$2 AND a.active LIMIT 1
+  `, [hash(browser), Date.now()]))[0];
+}
+export const required = () => accountsEnabled() || process.env.RESPONSEABLE_MFA_REQUIRED === 'true';
 export const enrollmentKey = () => {
   const value = process.env.RESPONSEABLE_MFA_KEY ?? '';
   return /^[a-f0-9]{64}$/i.test(value) ? Buffer.from(value, 'hex') : undefined;
 };
-export async function enrolled() {
+export async function enrolled(): Promise<boolean> {
+  if (accountsEnabled() && !account()) {
+    const identity = await currentIdentity();
+    return identity ? await withIdentity(identity, enrolled) : false;
+  }
   return Boolean((await query('SELECT 1 FROM operator_mfa WHERE operator = $1', [account()]))[0]);
 }
 export async function authCookie() {
@@ -29,19 +46,19 @@ export async function challenge(purpose: string, payload: string) {
   const browser = purpose === 'password' || purpose === 'login' ? key : await authCookie();
   if (!browser) return false;
   await query(`
-    INSERT INTO auth_challenges(browser, purpose, operator, payload, expires) VALUES ($1,$2,$3,$4,$5)
-    ON CONFLICT (browser,purpose) DO UPDATE SET payload=excluded.payload, expires=excluded.expires
-  `, [hash(browser), purpose, account(), payload, expires]);
+    INSERT INTO auth_challenges(browser, purpose, operator, payload, expires, credential_generation) VALUES ($1,$2,$3,$4,$5,$6)
+    ON CONFLICT (browser,purpose) DO UPDATE SET payload=excluded.payload, expires=excluded.expires, credential_generation=excluded.credential_generation
+  `, [hash(browser), purpose, account(), payload, expires, authIdentity.getStore()?.generation ?? null]);
   return true;
 }
 
 export async function pending(purpose: string, consume = false) {
   const browser = await authCookie();
   if (!browser) return undefined;
-  const clause = 'FROM auth_challenges WHERE browser=$1 AND purpose=$2 AND operator=$3 AND expires>$4';
+  const clause = 'FROM auth_challenges WHERE browser=$1 AND purpose=$2 AND operator=$3 AND expires>$4 AND credential_generation IS NOT DISTINCT FROM $5';
   const [entry] = await query<{ payload: string }>(
     consume ? 'DELETE ' + clause + ' RETURNING payload' : 'SELECT payload ' + clause,
-    [hash(browser), purpose, account(), Date.now()],
+    [hash(browser), purpose, account(), Date.now(), authIdentity.getStore()?.generation ?? null],
   );
   return entry?.payload;
 }
@@ -94,11 +111,19 @@ export async function verifyTotp(code: string) {
 }
 export async function finishLogin(invalidate = false, verified = true) {
   await pending('password', true);
-  if (invalidate) await query('DELETE FROM sessions WHERE room IS NULL AND name=$1', [account()]);
+  const identity = authIdentity.getStore();
+  if (invalidate) {
+    if (identity) await query('DELETE FROM sessions WHERE account_id=$1', [identity.id]);
+    else await query('DELETE FROM sessions WHERE room IS NULL AND name=$1', [account()]);
+  }
   (await cookies()).delete('ra_pre_auth');
-  await startSession(account()!, null, Date.now() + 8 * 3600_000, verified);
+  await startSession(identity?.login ?? account()!, null, Date.now() + 8 * 3600_000, verified, identity);
 }
-export async function canManage() {
+export async function canManage(): Promise<boolean> {
+  if (accountsEnabled() && !account()) {
+    const identity = await currentIdentity();
+    return identity ? await withIdentity(identity, canManage) : false;
+  }
   return !demo && (await pending('password')) === 'verified' &&
-    (!(await enrolled()) || (await session())?.name === account());
+    (!(await enrolled()) || (accountsEnabled() ? (await session())?.accountId : (await session())?.name) === account());
 }

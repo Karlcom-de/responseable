@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { query as sql, roomInIncident, roomPath, session, type Incident, type Room } from '../../../../lib/store';
+import { incidentCapability, query as sql, roomInIncident, roomPath, session, type Incident, type Room } from '../../../../lib/store';
 import { createRoom } from '../../../actions';
 import WorkspaceChat from '@/app/workspace-chat';
 import IncidentStage from '@/app/incident-stage';
@@ -25,6 +25,8 @@ export default async function Workspace({ params, searchParams }: {
   if (!current) redirect('/');
   const guest = current.room !== null;
   if (guest && current.room !== room) notFound();
+  if (!guest && !await incidentCapability(current, id)) notFound();
+  const manage = await incidentCapability(current, id, true);
   const active = await roomInIncident(id, room);
   if (!active) notFound();
   const incident = (await sql<Incident>('SELECT id, title, summary FROM incidents WHERE id = $1', [id]))[0];
@@ -46,11 +48,11 @@ export default async function Workspace({ params, searchParams }: {
         {!guest && !active.main && main && <RoomDestination className="back" href={roomPath(id, main.id)} name={main.name}>Back to main room</RoomDestination>}
         <Link href={roomPath(id, room) + "/wissen"} className="iconLabel" target="_blank" rel="noopener noreferrer" title="Opens in a new tab"><BookOpen className="navIcon" aria-hidden="true" />Room knowledge</Link>
         {!guest && <><h3>Situation summary</h3><p className="description">{incident.summary || 'No situation summary yet.'}</p></>}
-        {!guest && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
+        {manage && <div className="invites"><RoomInvites path={roomPath(id, room)} room={active.name} /></div>}
         <IncidentStage key={room} path={roomPath(id, room)}
           enabled={Boolean((!demo || process.env.RESPONSEABLE_EXERCISE_MEDIA === "true") && process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET)}
           board={<Board path={roomPath(id, room)} />} />
-        {!guest && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
+        {manage && <Notifications incident={id} room={room} draft={query.vorschau} error={query.fehler === "alarmierung"} />}
       </Card>
       <Card className="panel rooms" id="rooms" role="complementary"><h2 >Rooms </h2>
         <nav aria-label="Incident rooms"><ul>{rooms.map(item => <li key={item.id}>
@@ -58,7 +60,7 @@ export default async function Workspace({ params, searchParams }: {
             {item.main ? <DoorOpen className="navIcon" aria-hidden="true" /> : <GitBranch className="navIcon" aria-hidden="true" />}{item.name}
           </RoomDestination>
         </li>)}</ul></nav>
-        {!guest && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
+        {manage && <form className="stack roomForm" action={createRoom.bind(null, id, room)}>
           {query.fehler === 'raum' && <Notice>Enter a room name.</Notice>}
           <label>New subroom<Input name="name" placeholder="e.g. North sector" required maxLength={80} /></label>
           <Button type="submit" variant="outline">Create room</Button>

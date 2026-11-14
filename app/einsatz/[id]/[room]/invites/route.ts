@@ -1,16 +1,16 @@
 import { activeInvites, issueInvite } from '../../../../../lib/invites';
-import { roomAccess } from '../../../../../lib/store';
+import { roomManagement } from '../../../../../lib/store';
 
 type Context = { params: Promise<{ id: string; room: string }> };
 export async function GET(_: Request, { params }: Context) {
   const { id, room } = await params;
-  if ((await roomAccess(id, room))?.room !== null) return Response.json({ error: 'not_found' }, { status: 404 });
+  if (!await roomManagement(id, room)) return Response.json({ error: 'not_found' }, { status: 404 });
   return Response.json({ invites: await activeInvites(room) });
 }
 
 export async function POST(request: Request, { params }: Context) {
   const { id, room } = await params;
-  if ((await roomAccess(id, room))?.room !== null) return Response.json({ error: 'not_found' }, { status: 404 });
+  if (!await roomManagement(id, room)) return Response.json({ error: 'not_found' }, { status: 404 });
   const data = await request.json().catch(() => null);
   const maxUses = data?.maxUses ?? 1;
   const expiresInMinutes = data?.expiresInMinutes ?? 15;
