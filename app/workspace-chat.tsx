@@ -68,21 +68,6 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
       doc.head.append(style);
       const root = doc.createElement('converse-root');
       doc.body.append(root);
-      // Prevent native autofocus while Converse inserts its first composer.
-      const iframe = frame.current!;
-      iframe.inert = true;
-      let releaseFrame = 0;
-      const release = () => { iframe.inert = false; };
-      const composerObserver = new MutationObserver(() => {
-        const input = root.querySelector("textarea.chat-textarea");
-        if (!input) return;
-        input.removeAttribute("autofocus");
-        if (!releaseFrame) releaseFrame = requestAnimationFrame(() => {
-          releaseFrame = requestAnimationFrame(release);
-        });
-      });
-      composerObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["autofocus"] });
-      const failOpen = window.setTimeout(release, 8000);
       const syncTheme = () => {
         for (const attr of ['data-bs-theme', 'data-converse-theme']) {
           if (root.getAttribute(attr) !== theme.current) root.setAttribute(attr, theme.current);
@@ -114,7 +99,7 @@ function EmbeddedChat({ bootstrap, roomTitle }: { bootstrap: Bootstrap; roomTitl
         } catch { if (active) setFailed(true); }
       };
       doc.head.append(script);
-      return () => { active = false; clearTimeout(failOpen); cancelAnimationFrame(releaseFrame); release(); composerObserver.disconnect(); observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
+      return () => { active = false; observer.disconnect(); script.remove(); css.remove(); style.remove(); doc.body.replaceChildren(); };
     } catch { setFailed(true); }
   }, [bootstrap, roomTitle]);
 
