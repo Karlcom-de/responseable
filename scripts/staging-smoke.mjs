@@ -50,6 +50,7 @@ try {
   await operator.getByText('Abschnitt meldet sich').waitFor();
 
   assert.equal((await visitors.request.get(base + main + '/board')).status(), 404);
+  await operator.getByRole('button', { name: 'Whiteboard view' }).click();
   await operator.getByRole('button', { name: 'Open whiteboard' }).click();
   const canvas = operator.locator('canvas.interactive');
   await canvas.scrollIntoViewIfNeeded();

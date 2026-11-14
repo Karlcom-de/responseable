@@ -13,6 +13,7 @@ try {
   await page.getByLabel('Message').fill(message);
   await page.getByRole('button', { name: 'Send' }).click();
   await page.getByText(message, { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Whiteboard view' }).click();
   await page.getByRole('button', { name: 'Open whiteboard' }).click();
   const canvas = page.locator('canvas.interactive');
   await canvas.scrollIntoViewIfNeeded();

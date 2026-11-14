@@ -133,6 +133,7 @@ try {
   assert.equal(edition.document.revision, 2);
 
   await Promise.all([operator, guest].map(async page => {
+    await page.getByRole('button', { name: 'Whiteboard view' }).click();
     await page.getByRole('button', { name: 'Open whiteboard' }).click();
     await page.locator('canvas.interactive').waitFor();
     await page.waitForTimeout(1200);

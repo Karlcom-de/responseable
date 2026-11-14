@@ -83,6 +83,7 @@ try {
     await page.getByRole('button', { name: 'Refresh chat' }).click();
     assert.equal(await page.getByLabel('Message', { exact: true }).inputValue(), 'Draft through refresh');
     await guest.locator('video').filter({ visible: true }).first().waitFor();
+    await page.getByRole('button', { name: 'Whiteboard view' }).click();
     await page.getByRole('button', { name: 'Open whiteboard' }).click();
     const canvas = page.locator('canvas.interactive');
     await canvas.scrollIntoViewIfNeeded();
