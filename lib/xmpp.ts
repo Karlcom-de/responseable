@@ -40,7 +40,7 @@ export async function bootstrap(room: string, sessionHash: string) {
     await connection.query('COMMIT');
     await reconcileXmpp(false, room, sessionHash);
     return { jid, nick: roomNickname(grant.display_name, user), password: password(config.secret, jid, expiresAt),
-      roomTitle: grant.room_title, roomJid: grant.muc + '@' + config.service, websocketUrl: config.websocketUrl };
+      roomTitle: grant.room_title, roomJid: grant.muc + '@' + config.service, websocketUrl: config.websocketUrl, expiresAt };
   } finally {
     await connection.query('ROLLBACK').catch(() => {});
     connection.release();
