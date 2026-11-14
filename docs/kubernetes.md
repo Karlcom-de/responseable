@@ -11,7 +11,7 @@ App und Medien laufen zustandslos. PostgreSQL hält Incidents, Sessions, Chat, L
 - Separater, bereits vorhandener HA-Ingress oder Gateway. Der HTTP-Ingress dient der Signalisierung. Wenn TURN aktiviert ist, benötigt TURN einen eigenen erreichbaren L4-Endpunkt und ein darin passendes Zertifikat.
 - Ein zugelassenes OCI-Repository. Das Image für die Architektur der Ziel-Nodes bauen. Identischen Image-Digest für Migration und alle Pods verwenden. Für Releases einen Build pro Version verteilen. Bei unterschiedlichen Builds während eines Rollouts kann eine alte Browser-Sitzung einen Reload brauchen. [Next.js Self-Hosting](https://nextjs.org/docs/app/guides/self-hosting)
 
-## Einrichtung
+## Production installation
 
 `NS` und `IMAGE` werden pro Umgebung gesetzt. Ein vorhandenes hochverfügbares PostgreSQL oder Valkey kann anstelle der mitgelieferten Vorlagen verwendet werden.
 
@@ -24,16 +24,25 @@ kubectl -n "$NS" wait cluster/responseable-pg --for=condition=Ready --timeout=30
 
 CloudNativePG liefert den Schreibdienst `responseable-pg-rw`. Die App verbindet sich mit dem Datenbankowner aus dem erzeugten App-Secret. Der Datenbank-URI verwendet diesen Dienst. Für Backups und PITR kann der [Barman Cloud Plugin](https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/) an einen unabhängigen Bucket angebunden werden.
 
-Lege im Namespace das Secret `responseable-runtime` aus dem zuständigen Secret Store an. Erforderliche Schlüssel sind `DATABASE_URL`, `RESPONSEABLE_OPERATOR` und `RESPONSEABLE_PASSWORD_HASH`. Für Medien `LIVEKIT_API_KEY` und `LIVEKIT_API_SECRET` ergänzen. Für Android `ANDROID_GATEWAY_URL` mit der privaten API-Basis und `ANDROID_GATEWAY_KEY` ergänzen. Für optionales SIP `LIVEKIT_INTERNAL_URL` und `LIVEKIT_SIP_TRUNK_ID` ergänzen. LiveKit verwendet dieselben Signaturschlüssel wie die App.
+Lege im Namespace das Secret `responseable-runtime` aus dem zuständigen Secret Store an. Erforderliche Schlüssel sind `DATABASE_URL` und `RESPONSEABLE_MFA_KEY` (32 zufällige Bytes als 64 Hex-Zeichen). Sichere den MFA-Schlüssel separat. Das Chart aktiviert individuelle Konten und MFA. Für Medien `LIVEKIT_API_KEY` und `LIVEKIT_API_SECRET` ergänzen. Für Android `ANDROID_GATEWAY_URL` mit der privaten API-Basis und `ANDROID_GATEWAY_KEY` ergänzen. Für optionales SIP `LIVEKIT_INTERNAL_URL` und `LIVEKIT_SIP_TRUNK_ID` ergänzen. LiveKit verwendet dieselben Signaturschlüssel wie die App.
 
 ```sh
 helm upgrade --install responseable deploy/helm/responseable -n "$NS" \
   --set-string "app.image=$IMAGE" \
   --set-string "app.publicOrigin=$APP_ORIGIN" \
-  --set app.ingress.enabled=true \
+  --set app.ingress.enabled=false \
   --set-string "app.ingress.tlsSecret=$APP_TLS_SECRET" \
   --wait --rollback-on-failure --timeout 5m
 ```
+
+Für eine Neuinstallation lege das erste Admin-Konto über den bereits gestarteten Pod an. Setze `ADMIN_LOGIN` auf den gewünschten Login und übergib das Passwort aus dem Secret Store per stdin.
+
+```sh
+kubectl -n "$NS" exec -i deploy/responseable-web -- \
+  node scripts/bootstrap-admin.mjs new "$ADMIN_LOGIN" < "$ADMIN_PASSWORD_FILE"
+```
+
+Danach führe denselben Helm-Befehl mit `app.ingress.enabled=true` aus. Melde dich über die kanonische HTTPS-Adresse an und richte MFA ein. Bei einem Upgrade von einer bestehenden Einzelkonto-Installation zuerst den [Migrations- und Rückfallablauf](production-accounts-plan.md#isolated-staging) ausführen und alle alten App-Replikate vor der Freigabe des Ingress stoppen.
 
 Für einen Release von einem Build-Host mit Registry-Zugang:
 
@@ -76,12 +85,12 @@ Zusätzlich Lasttest mit Teilnehmerzahl und erwarteter gleichzeitiger Zahl von R
 
 ## Production cutover
 
-Use one approved canonical HTTPS hostname and keep it stable for registered passkeys. Set `app.publicOrigin` to that exact origin and configure the TLS secret and ingress class. Verify externally to the cluster from the intended operator and guest networks. Configure `RESPONSEABLE_MFA_KEY` from the runtime secret store, back it up separately from the database, and require enrollment with `RESPONSEABLE_MFA_REQUIRED=true`. Put a per-source sign-in limit at the ingress. If setting `RESPONSEABLE_TRUSTED_CLIENT_IP_HEADER`, the ingress must overwrite the header, and direct pod access must be blocked.
+Use one approved canonical HTTPS hostname and keep it stable for registered passkeys. Set `app.publicOrigin` to that exact origin and configure the TLS secret and ingress class. Verify externally to the cluster from the intended operator and guest networks. Configure `RESPONSEABLE_MFA_KEY` from the runtime secret store, back it up separately from the database, and complete the required first-admin enrollment. Put a per-source sign-in limit at the ingress. If setting `RESPONSEABLE_TRUSTED_CLIENT_IP_HEADER`, the ingress must overwrite the header, and direct pod access must be blocked.
 
 1. Build the verified Git revision once and pin its image digest in Helm. Confirm PostgreSQL backups and restore into an isolated database before applying the migration job.
-2. Deploy with `helm upgrade --install --atomic --wait`; verify `/health/live`, `/health/ready`, the deployed image digest and the ready replica count. Enrollment and guest tests use only synthetic data and inert providers.
+2. Deploy with the Helm command above; verify `/health/live`, `/health/ready`, the deployed image digest and the ready replica count. Enrollment and guest tests use only synthetic data and inert providers.
 3. Verify authentication from the canonical HTTPS origin and check LiveKit signaling and media separately. Test audio and video from two client networks with working ICE or TURN. Kubernetes port-forward carries TCP only and does not establish production UDP reachability. A failing media port-forward can also terminate other forwards sharing its process.
 4. Confirm a pod disruption preserves existing sessions, documents and chat. Exercise database failover and the restore procedure before accepting a high-availability target.
-5. If the web rollout fails, use `helm rollback` to the previously verified release and retest readiness. Schema changes are additive for rollback. Restore from backup only when needed for data recovery, with the data-loss window stated explicitly.
+5. If the web rollout fails, close ingress before rollback. Roll back only to a verified account-aware release or restore the pre-activation database with the legacy isolated release. Restore from backup only when needed for data recovery, with the data-loss window stated explicitly.
 
 Revoking an invite blocks subsequent protected HTTP requests. A LiveKit connection already established under that invitation can remain active until disconnected. The join grant expires after two minutes and has no effect on an existing media connection. Optional AI setup is described in [AI configuration](ai.md).
